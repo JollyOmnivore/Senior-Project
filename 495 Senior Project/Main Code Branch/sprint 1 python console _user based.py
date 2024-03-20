@@ -12,7 +12,7 @@ import random
 
 #primesList = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31] #11 stored integers for rand selection
 
-
+#double check this fully functions correct
 def getNVal(primesList):
     p = random.choice(primesList) # random prime value 1
     q = random.choice(primesList) # random prime value 2
@@ -69,10 +69,10 @@ def prime_range(lower,upper):
     return(primes)
 
 #def decryptTotal(total):
-
+#dbl chck following 2 lines call correctly============
 listOfPrimes = prime_range(400, 800)
 n = getNVal(listOfPrimes)
-
+#=====================================================
 coprimeList = randNumList(n)
 validVote = ['a', 'b', 'c']	# list of valid input options for user vote
 votConf = "n" #boolean between y and n checking for user confirmation of their vote
