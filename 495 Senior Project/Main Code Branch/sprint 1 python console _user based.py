@@ -10,16 +10,19 @@ from random import randrange
 from math import pow, gcd, log10
 import random
 
-primesList = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31] #11 stored integers for rand selection
+#primesList = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31] #11 stored integers for rand selection
 
-p = random.choice(primesList) # random prime value 1
-q = random.choice(primesList) # random prime value 2
-while p == q: #ensures p and q are not the same
-    q = random.choice(primesList)
-n = p * q #get prime product
-print("p: " + str(p))
-print("q: " + str(q))
-print("n: " + str(n))
+
+def getNVal(primesList):
+    p = random.choice(primesList) # random prime value 1
+    q = random.choice(primesList) # random prime value 2
+    while p == q: #ensures p and q are not the same
+        q = random.choice(primesList)
+    n = p * q #get prime product
+    print("p: " + str(p))
+    print("q: " + str(q))
+    print("n: " + str(n))
+    return n
 
 def randNumList(keyVal):
     newList = []
@@ -66,8 +69,9 @@ def prime_range(lower,upper):
     return(primes)
 
 #def decryptTotal(total):
-    
 
+listOfPrimes = prime_range(400, 800)
+n = getNVal(listOfPrimes)
 
 coprimeList = randNumList(n)
 validVote = ['a', 'b', 'c']	# list of valid input options for user vote
