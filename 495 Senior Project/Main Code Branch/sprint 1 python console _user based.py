@@ -50,10 +50,10 @@ def prime_range(lower, upper):
 #dbl chck following 2 lines call correctly============
 listOfPrimes = prime_range(400, 800)
 print("prime range works")
-p = random.choice(primesList) # random prime value 1
-q = random.choice(primesList) # random prime value 2
+p = random.choice(listOfPrimes) # random prime value 1
+q = random.choice(listOfPrimes) # random prime value 2
 while p == q: #ensures p and q are not the same
-    q = random.choice(primesList)
+    q = random.choice(listOfPrimes)
 n = p * q #get prime product
 lam = (p-1) * (q-1)
 print("p: " + str(p))
