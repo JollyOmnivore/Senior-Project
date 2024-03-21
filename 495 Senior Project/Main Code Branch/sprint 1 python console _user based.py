@@ -1,45 +1,23 @@
-'''
-SMALL SCALE OF PRIMELIST
-'''
-
-'''
-    N value never changes, only r that changes :D
-'''
-
 from random import randrange
 from math import pow, gcd, log10
 import random
 
 #primesList = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31] #11 stored integers for rand selection
 
-#double check this fully functions correct
-def getNVal(primesList):
-    p = random.choice(primesList) # random prime value 1
-    q = random.choice(primesList) # random prime value 2
-    while p == q: #ensures p and q are not the same
-        q = random.choice(primesList)
-    n = p * q #get prime product
-    print("p: " + str(p))
-    print("q: " + str(q))
-    print("n: " + str(n))
-    return n
-
 def randNumList(keyVal):
     newList = []
+    #print("place checker 1")
     listOfCoprimes = prime_range(2, n)
+    #print(listOfCoprimes)
     for i in range(2,n):
-        if i not in listOfCoprimes:
+        if not i in listOfCoprimes:
             newList.append(i)
+            #print(i)
     return newList
 
-def encryptVote(usrVote, randInt): #general funcion for step by step encryption technique
+def encryptVote(usrVote, randInt, voteVal): #general funcion for step by step encryption technique
     #n = n+1 #1+n in encrypt function
-    if usrVote == 'a':
-        voteVal = 1
-    elif usrVote == 'b':
-        voteVal = 100
-    else:
-        voteVal = 10000
+    
     equationPartOne = (n+1) ** voteVal     # result of 1+n to the power of voteVal
     #listOfCoprimes = prime_range(2, n) # creation of random number r for encrypting
     #r = random.choice(listOfCoprimes) #random variable in the list of numbers coprime to the product of prime1 and prime2
@@ -51,27 +29,37 @@ def encryptVote(usrVote, randInt): #general funcion for step by step encryption 
 
 # keep n the same, only change r
 
-#W: We should consider a better function here, this is highly inefective
-# and wastes time. If this has to run every time, we're in trouble.
-def prime_range(lower,upper):
-    primes = []
+def prime_range(lower, upper):
+    prime_list = [] 
     for num in range(lower, upper + 1):
-       # all prime numbers are greater than 1
-       if num > 1:
-           for i in range(2, num):
-               if (num % i) == 0:
-                   break
-               else:
-                   if num not in primes:
-                       primes.append(num)
-                       #getting stuck forever in this
-                       #print(num)
-    return(primes)
+        if num > 1:
+            for i in range(2, num):
+                if (num % i) == 0:
+                    break
+            else:
+                prime_list.append(num)
+    #print(num)
+    return prime_list 
 
-#def decryptTotal(total):
+'''def decryptTotal(total, lam):
+    mu = pow(lam, -1, n)
+    power_mod = pow(total, lam[, (n**2)])
+    result = (power_mod - 1) / n
+    result = result * mu
+    return (result % n)'''
 #dbl chck following 2 lines call correctly============
 listOfPrimes = prime_range(400, 800)
-n = getNVal(listOfPrimes)
+print("prime range works")
+p = random.choice(primesList) # random prime value 1
+q = random.choice(primesList) # random prime value 2
+while p == q: #ensures p and q are not the same
+    q = random.choice(primesList)
+n = p * q #get prime product
+lam = (p-1) * (q-1)
+print("p: " + str(p))
+print("q: " + str(q))
+print("n: " + str(n))
+print("lam: " + str(lam))
 #=====================================================
 coprimeList = randNumList(n)
 validVote = ['a', 'b', 'c']	# list of valid input options for user vote
@@ -82,14 +70,18 @@ while(votConf != "y"):
     print("         Option C: Abstain")
     usrVote = input("Please select your vote: A, B, C:     ")
     usrVote = usrVote.lower() #forces user vote to lower
-    #encrypted vote function called here with encryptedVote
-    '''if passThrough == 0:
+    #below if-elif-else keys voteVal to what user chose as an option.
+    if usrVote == 'a':
+        voteVal = 1
+    elif usrVote == 'b':
+        voteVal = 100
+    else:
+        voteVal = 10000
+    #below if only generates a new r on the first passthrough of the vote
+    if passThrough == 0:
         r = random.choice(coprimeList)
-        encryptedVote = encryptVote(usrVote, r)
-        passThrough = 1'''
-    #one of these two is the correct call, but which one??? *shrugs*
-    '''r = random.choice(coprimeList)
-    encryptedVote = encryptVote(usrVote, r)'''
+        passThrough = 1
+    encryptedVote = encryptVote(usrVote, r, voteVal) #encrypted vote function called here with encryptedVote
     
     if usrVote in validVote: #check for vote being a valid option
         print("You chose:    " + usrVote)
@@ -106,7 +98,13 @@ decryptThis = encryptedVote
 voteArray = ['~', '~', '~', '~', '~', '~', '~', '~', '~', '~']
 for i in range(1,10):
     randVote = random.choice(validVote)
-    voteArray[i] = encryptVote(randVote, random.choice(coprimeList))
+    if randVote == 'a':
+        fakeVoteVal = 1
+    elif randVote == 'b':
+        fakeVoteVal = 100
+    else:
+        fakeVoteVal = 10000
+    voteArray[i] = encryptVote(randVote, random.choice(coprimeList), fakeVoteVal)
     decryptThis += voteArray[i]
     print("Voter " + str(i) + " with vote choice " + str(randVote) + " encrypted vote: " + str(voteArray[i]))
     
@@ -114,7 +112,7 @@ for i in range(1,10):
 
 print("Number to decrypt: " + str(decryptThis))
     
-    
+#decryptTest = decryptVote(decryptTotal, lam)
 
 
 '''num1 = int(10 ** (candidates /2 * log10(numVoters)))
