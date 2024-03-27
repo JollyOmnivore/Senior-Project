@@ -1,23 +1,36 @@
+'''
+SMALL SCALE OF PRIMELIST
+'''
+
+'''
+    N value never changes, only r that changes :D
+'''
+
 from random import randrange
 from math import pow, gcd, log10
 import random
 
 #primesList = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31] #11 stored integers for rand selection
 
+'''
+    define a checker for coprime nums; i.e., check to see if the only factor shared between n and i is 1
+'''
+
 def randNumList(keyVal):
     newList = []
     #print("place checker 1")
-    listOfCoprimes = prime_range(2, n)
+    
     #print(listOfCoprimes)
-    for i in range(2,n):
-        if not i in listOfCoprimes:
+    for i in range(2,keyVal):
+        if i != p and i != q:
             newList.append(i)
-            #print(i)
+                    #print("appended " + str(i))
     return newList
 
 def encryptVote(usrVote, randInt, voteVal): #general funcion for step by step encryption technique
     #n = n+1 #1+n in encrypt function
-    
+    if voteVal == 0:
+        return 0
     equationPartOne = (n+1) ** voteVal     # result of 1+n to the power of voteVal
     #listOfCoprimes = prime_range(2, n) # creation of random number r for encrypting
     #r = random.choice(listOfCoprimes) #random variable in the list of numbers coprime to the product of prime1 and prime2
@@ -36,19 +49,43 @@ def prime_range(lower, upper):
             for i in range(2, num):
                 if (num % i) == 0:
                     break
-            else:
+            else: # I don't know why this works, i don't like that this works, but it works and we don't touch this ever
                 prime_list.append(num)
     #print(num)
     return prime_list 
 
-'''def decryptTotal(total, lam):
-    mu = pow(lam, -1, n)
-    power_mod = pow(total, lam[, (n**2)])
-    result = (power_mod - 1) / n
+def powerMod(A, N, M): 
+    print("a: " + str(A))
+    print("n: " + str(N))
+    print("m: " + str(M))
+    retval = A ** N
+    print("retval: " + str(retval))
+    #print("pow func: " + str(pow(A, N, M)))
+    return(retval % M)
+
+'''
+    FOUND MOD_INVERSE DOCUMENTATION ON geeksforgeeks, DIRECTLY CORRELATES TO SAGEMATH INVERSE_MOD
+'''
+
+def modInverse(A, M):
+    for X in range(1, M):
+        if (((A % M) * (X % M)) % M == 1):
+            return X
+    return -1
+
+def decryptTotal(total, LAM):
+    mu = modInverse(LAM,n)
+    print("mu val: " + str(mu))
+    power_mod = powerMod(total, LAM, (n**2))
+    print("power mod val: " + str(power_mod))
+    result = int((power_mod - 1) / n)
+    print("result val 1:" + str(result))
     result = result * mu
-    return (result % n)'''
+    print("result val 2:" + str(result))
+    return (result % n)
+    
 #dbl chck following 2 lines call correctly============
-listOfPrimes = prime_range(400, 800)
+listOfPrimes = prime_range(2, 25)
 print("prime range works")
 p = random.choice(listOfPrimes) # random prime value 1
 q = random.choice(listOfPrimes) # random prime value 2
@@ -76,11 +113,12 @@ while(votConf != "y"):
     elif usrVote == 'b':
         voteVal = 100
     else:
-        voteVal = 10000
+        voteVal = 0
     #below if only generates a new r on the first passthrough of the vote
-    if passThrough == 0:
-        r = random.choice(coprimeList)
-        passThrough = 1
+    #if passThrough == 0:
+    r = random.choice(coprimeList)
+    print("r val: " + str(r))
+    passThrough = 1
     encryptedVote = encryptVote(usrVote, r, voteVal) #encrypted vote function called here with encryptedVote
     
     if usrVote in validVote: #check for vote being a valid option
@@ -95,47 +133,23 @@ while(votConf != "y"):
             votConf = votConf.lower()
 
 decryptThis = encryptedVote
-voteArray = ['~', '~', '~', '~', '~', '~', '~', '~', '~', '~']
-for i in range(1,10):
+voteArray = ['~', '~', '~', '~']#, '~', '~', '~', '~', '~', '~'
+for i in range(1,4):
     randVote = random.choice(validVote)
     if randVote == 'a':
         fakeVoteVal = 1
     elif randVote == 'b':
         fakeVoteVal = 100
     else:
-        fakeVoteVal = 10000
+        fakeVoteVal = 10
     voteArray[i] = encryptVote(randVote, random.choice(coprimeList), fakeVoteVal)
-    decryptThis += voteArray[i]
+    decryptThis *= voteArray[i]
     print("Voter " + str(i) + " with vote choice " + str(randVote) + " encrypted vote: " + str(voteArray[i]))
     
 
 
 print("Number to decrypt: " + str(decryptThis))
     
-#decryptTest = decryptVote(decryptTotal, lam)
+decryptTest = decryptTotal(decryptThis, lam)
 
-
-'''num1 = int(10 ** (candidates /2 * log10(numVoters)))
-print("num1:", str(num1))
-
-num2 = int(10 ** (candidates / 2 * log10(numVoters+1)))
-print(num2)
-
-l=prime_range(num1, num2)
-print(l)
-#C: l should return as a list
-
-p=l[randrange(len(l))];
-q=l[randrange(len(l))];
-while p==q:
-    q=l[randrange(len(l))]
-n=p*q;
-lam=(p-1)*(q-1);
-mu=pow(lam,-1, n);
-#C: Check that "good" primes are selected.  Always works 
-# for primes of same size, but I haven't proven this yet.
-#W: Currently errors here, pow doesnt accept negative 1
-# for param 2, even though by all acounts it should. Goal
-# is to do inverse modulo here. Check if there's a func
-# from Muskat for this.
-gcd(n,(p-1)*(q-1))'''
+print("decrypted val:" + str(decryptTest))
