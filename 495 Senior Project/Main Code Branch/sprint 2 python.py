@@ -113,7 +113,7 @@ while(votConf != "y"):
     elif usrVote == 'b':
         voteVal = 100
     else:
-        voteVal = 0
+        voteVal = 10000
     #below if only generates a new r on the first passthrough of the vote
     #if passThrough == 0:
     r = random.choice(coprimeList)
@@ -142,7 +142,7 @@ for i in range(1,4):
     elif randVote == 'b':
         fakeVoteVal = 100
     else:
-        fakeVoteVal = 10
+        fakeVoteVal = 10000
     voteArray[i] = encryptVote(randVote, random.choice(coprimeList), fakeVoteVal)
     expectedResult += fakeVoteVal
     decryptThis *= voteArray[i]
