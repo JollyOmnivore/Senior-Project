@@ -133,7 +133,7 @@ while(votConf != "y"):
             votConf = votConf.lower()
 
 decryptThis = encryptedVote
-expectedResult = 0
+expectedResult = voteVal
 voteArray = ['~', '~', '~', '~']#, '~', '~', '~', '~', '~', '~'
 for i in range(1,4):
     randVote = random.choice(validVote)
