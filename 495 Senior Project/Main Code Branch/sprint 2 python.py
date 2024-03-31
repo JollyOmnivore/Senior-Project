@@ -133,6 +133,7 @@ while(votConf != "y"):
             votConf = votConf.lower()
 
 decryptThis = encryptedVote
+expectedResult = 0
 voteArray = ['~', '~', '~', '~']#, '~', '~', '~', '~', '~', '~'
 for i in range(1,4):
     randVote = random.choice(validVote)
@@ -143,6 +144,7 @@ for i in range(1,4):
     else:
         fakeVoteVal = 10
     voteArray[i] = encryptVote(randVote, random.choice(coprimeList), fakeVoteVal)
+    expectedResult += fakeVoteVal
     decryptThis *= voteArray[i]
     print("Voter " + str(i) + " with vote choice " + str(randVote) + " encrypted vote: " + str(voteArray[i]))
     
@@ -153,3 +155,4 @@ print("Number to decrypt: " + str(decryptThis))
 decryptTest = decryptTotal(decryptThis, lam)
 
 print("decrypted val:" + str(decryptTest))
+print("expected decrypt: " + str(expectedResult))
