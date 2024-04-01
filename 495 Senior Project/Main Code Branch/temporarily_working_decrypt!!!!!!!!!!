@@ -1,8 +1,4 @@
 '''
-SMALL SCALE OF PRIMELIST
-'''
-
-'''
     N value never changes, only r that changes :D
 '''
 
@@ -66,10 +62,15 @@ def prime_range(lower, upper):
     #print(num)
     return prime_list 
 
+retval = 0
+
 def powerMod(A, N, M): 
     '''print("a: " + str(A))
     print("n: " + str(N))
     print("m: " + str(M))'''
+    print(A)
+    print(N)
+    
     retval = A ** N
     #print("retval: " + str(retval))
     #print("pow func: " + str(pow(A, N, M)))
@@ -97,8 +98,8 @@ def decryptTotal(total):
         return 1
     elif checkVal == 100:
         return 100
-    elif checkVal == 662:
-        return 10000
+    #elif checkVal == 662:
+    #    return 10000
     else:
         return checkVal
     
@@ -154,7 +155,7 @@ while(votConf != "y"):
 #decryptThis = encryptedVote
 #expectedResult = 0
 expectedResult = voteVal
-voteArray = ['~', '~']#, '~', '~', '~', '~', '~', '~', '~', '~'
+voteArray = ['~', '~', '~', '~', '~']#, '~', '~', '~', '~', '~'
 voteArray[0] = encryptedVote
 voterCount = 1
 randVote = random.choice(validVote)
@@ -169,10 +170,25 @@ expectedResult += fakeVoteVal
 #decryptThis *= voteArray[i]
 voterCount += 1
 print("Voter 1 with vote choice " + str(randVote) + " encrypted vote: " + str(voteArray[1]))
-    
+
+for g in range(2,5):
+    randVote = random.choice(validVote)
+    if randVote == 'a':
+        fakeVoteVal = 1
+    elif randVote == 'b':
+        fakeVoteVal = 100
+    else:
+        fakeVoteVal = 10
+    voteArray[g] = encryptVote(randVote, random.choice(coprimeList), fakeVoteVal)
+    expectedResult += fakeVoteVal
+    voterCount += 1
+    print("Voter " + str(g) + " with vote choice " + str(randVote) + " encrypted vote: " + str(voteArray[int(g)]))
+
 actualResult = 0
 decryptedTempVal = 0
-for i in range(0, (voterCount)):
+print(voteArray)
+for i in range(0, voterCount):
+    print(str(i) + " is current index ========")
     decryptedTempVal = decryptTotal(voteArray[i])
     print("decrypted val: " + str(voteArray[i]) + " to vote: " + str(decryptedTempVal))
     actualResult = decryptedTempVal + actualResult
