@@ -1,0 +1,30 @@
+/* Reset default padding and margin for body and html */
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+nav {
+  display: flex;
+  justify-content: flex-start;
+  outline: white solid 10px;
+  background-color: #333;
+  padding-left: 10px;
+  margin: 0; /* Ensures no margin on the nav itself */
+}
+
+nav a {
+  font-size: 20px; /* Font size for a sleek look */
+  padding: 8px 10px; /* Adjusted padding for compact navigation links */
+  text-decoration: none;
+  color: white;
+  font-family: 'Helvetica Neue', Arial, sans-serif; /* Modern, clean font choice */
+  display: block;
+}
+
+nav a:hover {
+  background-color: #C70039;
+}
+body { /* this applys the font EVERYWHERE  */
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+}

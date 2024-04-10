@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>About</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f4f4f4;
+        }
+        .container {
+            width: 80%;
+            margin: auto;
+            overflow: hidden;
+        }
+        header {
+            background: #333;
+            color: #fff;
+            padding-top: 30px;
+            min-height: 70px;
+            border-bottom: #C70039 3px solid;
+        }
+        header h1 {
+            text-align: center;
+            margin: 0;
+            padding-bottom: 10px;
+        }
+        .content-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: #fff;
+        }
+        .content-section h2, .content-section p {
+            text-align: center;
+        }
+        .team-photos {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+        .team-member {
+            text-align: center; /* Center everything inside the team-member div */
+            padding: 10px;
+        }
+        .team-member img {
+            width: 100%;
+            max-width: 200px; /* Set a max-width for images */
+            height: auto;
+            border-radius: 50%; /* Makes images round */
+            box-shadow: 0 0 10px #ccc; /* Adds a subtle shadow to images */
+        }
+        .team-member p {
+            margin: 10px 0 5px; /* Adds some space above and below the name */
+            font-weight: bold;
+        }
+        .linkedin-icon {
+            display: inline-block; /* Ensures the link doesn't take full width */
+            margin-bottom: 10px; /* Adds some space below the LinkedIn icon */
+        }
+        .linkedin-icon img {
+            width: 30px; /* Size of the LinkedIn icon */
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+{% extends "navbar.html" %}
+
+{% block content %}
+<div class="container">
+    <header>
+        <h1>Our Mission Statement</h1>
+    </header>
+
+    <div class="content-section">
+        <p>Join us in showcasing the latest and greatest in voting technology, Homomorphic Encryption Elections! From the mind of our very own Jeremy Muskat, PH.D., come and explore the world of secure, interactive, and democratic voting methods soon to take place on Western’s campus, and find out how your vote will be kept safe. Whether you’re a STEM Major, parent, or just want to learn what encryption is, don’t miss your chance for an enlightening experience, and to be part of the future of democracy!</p>
+    </div>
+
+    <div class="team-photos">
+        <div class="team-member">
+            <img src="static/carter.png" alt="Carter">
+            <p>Carter</p>
+            <a href="https://www.linkedin.com/in/carterauer/" class="linkedin-icon">
+                <img src="static/linkedin.webp" alt="LinkedIn">
+            </a>
+        </div>
+        <div class="team-member">
+            <img src="static/joe.png" alt="Joe">
+            <p>Joe</p>
+            <a href="https://www.linkedin.com/in/joseph-vennard/" class="linkedin-icon">
+                <img src="static/linkedin.webp" alt="LinkedIn">
+            </a>
+        </div>
+        <div class="team-member">
+            <img src="static/willow.png" alt="Willow">
+            <p>Willow</p>
+            <a href="https://www.linkedin.com" class="linkedin-icon">
+                <img src="static/linkedin.webp" alt="LinkedIn">
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+</body>
+</html>

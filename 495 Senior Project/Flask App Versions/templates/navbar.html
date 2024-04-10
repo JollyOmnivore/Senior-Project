@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}{% endblock %}</title>
+    <link href="/static/navbarcss.css" rel="stylesheet">
+    <link rel="shortcut icon" type="image/x-icon" href="/static/Icon.ico" />
+</head>
+<body>
+
+{% if loggedin %}
+<nav class="nav">
+    <a href="currentVote">Current Vote</a>
+    <a href="/">About us</a>
+    <a href="/profile">Profile</a>
+    <a href="/logout">Logout</a>
+{% if username == "Admin" %}
+    <a href="/">Create Vote</a>
+{% endif %}
+
+</nav>
+
+{% else %}
+
+<nav class="nav">
+  <a href="/about">About us</a>
+  <a href="/login">Login</a>
+  <a href="/create">Create Account</a>
+</nav>
+
+{% endif %}
+
+{%block content %}
+{% endblock %}
+</body>
+</html>
