@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Profile</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f4f4f4; /* Apply the background color to the whole page */
+            height: 100%; /* Ensure the minimum height covers the viewport */
+        }
+        .profile-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px; /* Add some padding around the content */
+        }
+        .profile-container h2, .profile-container h3 {
+            text-align: center;
+            color: #333;
+        }
+        .profile-container a {
+            background-color: #C70039;
+            color: #ffffff;
+            padding: 10px 20px;
+            margin-top: 20px; /* Add some space above the link */
+            border-radius: 5px;
+            text-decoration: none; /* Removes underline from links */
+            transition: background-color 0.3s;
+        }
+        .profile-container a:hover {
+            background-color: #a60332;
+        }
+    </style>
+</head>
+<body>
+{% extends "navbar.html" %}
+
+{% block content %}
+<div class="profile-container">
+    <h2>Profile</h2>
+    <h3>{{username}}</h3>
+    <a href="/update">Change Password</a>
+</div>
+{% endblock %}
+</body>
+</html>

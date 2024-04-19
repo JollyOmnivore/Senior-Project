@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Create Account</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+        }
+        .account-create-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            min-height: 100vh;
+            padding: 20px; /* Adds padding around the container */
+        }
+        form {
+            background: #ffffff;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 15px; /* Adjusted for better spacing between form elements */
+            width: 100%;
+            max-width: 320px; /* Sets a max width for the form */
+        }
+        form label {
+            font-weight: bold;
+            text-align: left; /* Aligns labels to the left */
+            margin-bottom: 5px; /* Adds a small space below the label */
+        }
+        form input[type="text"],
+        form input[type="password"] {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px; /* Adds a small space below the input */
+        }
+        form input[type="submit"] {
+            background-color: #C70039;
+            color: #ffffff;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        form input[type="submit"]:hover {
+            background-color: #a60332;
+        }
+        h2 {
+            color: #333;
+            margin-bottom: 20px; /* Adds space between title and form */
+        }
+    </style>
+</head>
+<body>
+{% extends "navbar.html" %}
+
+{% block content %}
+<div class="account-create-container">
+    <h2>Create Account</h2>
+
+    <form action="/create" method="post">
+        <div>
+            <label for="name">Full Name:</label>
+            <input type="text" id="name" name="name" required>
+        </div>
+        <div>
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" required>
+        </div>
+        <div>
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+        <input type="submit" value="Create Account">
+    </form>
+</div>
+{% endblock %}
+</body>
+</html>
