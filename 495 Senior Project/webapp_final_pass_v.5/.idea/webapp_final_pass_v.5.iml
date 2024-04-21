@@ -8,8 +8,6 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="Flask Webapp 4-19-2024" />
-    <orderEntry type="module" module-name="Main Code Branch" />
   </component>
   <component name="TemplatesService">
     <option name="TEMPLATE_FOLDERS">

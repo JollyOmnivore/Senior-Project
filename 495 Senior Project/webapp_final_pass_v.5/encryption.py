@@ -3,23 +3,27 @@
 #Written By: Joseph (Joe) Vennard, with support from William (Willow) Keenan-Harte
 #Addapted to Server (Hamfistedly) By: William (Willow) Keenan-Harte
 
-'''
+"""
     N value never changes, only r that changes :D
     define a checker for coprime nums; i.e., check to see if the only factor shared between n and i is 1
-'''
+"""
 
 from random import randrange
 from math import pow, gcd, log10
 import random
 import json
+# time likes being special. IDK why. time is scary.
+import time
 
 #prepare json file for array
+random.seed(time.time_ns())
 with open('instance/prime_numbers.json', 'r') as f:
     data = json.load(f)
 
 retval = 0
-primesListSmall = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31] #11 stored integers for rand selection
+primesListSmall = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31]  #11 stored integers for rand selection
 primesListBig = data['10kPrimeList']
+
 
 # creates a list of random coprimes in the range of 2 through the n value (aka keyVal)
 def randNumList(keyVal, p, q):

@@ -19,21 +19,24 @@
 #
 #   To-Do:
 #   Ad-infinium: Fix math errors/security flaws
-#   1.Fix(?) Create account? Still getting warnings but it still runs so idk.
+#   1.Fix(?) Create account? Still getting warnings but it still runs so IDK.
 #   2.Fully implement Create Vote.
 #       - Generate p q values and do math accordingly
 #       - Fill database accordingly
 #       - Disallow users from voting when no vote active
 #       - Implement timer section of create vote
+#           + Time is already imported
 #       - Make sure users can access vote results after.
 #   3.Fully implement voting
 #       - Make sure all votes arive in time.
 #       - Simulate tests (steal old Joe script?)
-#       -
+
+
 from flask import *
 from flask_sqlalchemy import *
 from flask_login import *
 from encryption import *
+
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.sqlite'
@@ -112,7 +115,7 @@ def login():
 @app.route('/create', methods=['GET', 'POST'])
 def create():
     if request.method == 'GET':
-        return render_template('Create.html')
+        return render_template('create.html')
     elif request.method == 'POST':
         name = request.form['name']
         username = request.form['username']
@@ -136,7 +139,7 @@ def create():
 @login_required  # uncomment to make login required
 def currentVote():
     if request.method == 'GET':
-        return render_template('Current vote.html')
+        return render_template('currentVote.html')
 
 
 @app.route('/createVote', methods=['GET', 'POST'])
@@ -144,7 +147,7 @@ def currentVote():
 def createVote():
     if request.method == 'GET':
         if current_user.username == "Admin":
-            return render_template('CreateVote.html')
+            return render_template('createVote.html')
         else:
             return redirect('/')
     elif request.method == 'POST':
@@ -167,8 +170,7 @@ def createVote():
 @login_required
 def update():
     if request.method == 'GET':
-        loggedin = current_user.is_authenticated
-        return render_template('update.html', users=User.query.all(), loggedin=loggedin)
+        return render_template('update.html')
     elif request.method == 'POST':
         password = request.form['password']
         newpassword = request.form['newpassword']
@@ -199,9 +201,11 @@ def logout():
 @app.errorhandler(404)
 @app.errorhandler(401)
 def functionToRun(err):
-    # I don't know why we have a user query here but whatever. users aren't refenced in navbar or errpg?
-    return render_template('errorpage.html', users=User.query.all(), err=err)
+    return render_template('errorPage.html', err=err)
 
 
 if __name__ == '__main__':
+    random.seed(time.time_ns())
+    testingIndex = int(random.randint(0, len(primesListBig)))
+    print(testingIndex)
     app.run(debug=True)
