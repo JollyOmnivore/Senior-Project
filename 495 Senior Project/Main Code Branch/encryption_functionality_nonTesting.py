@@ -5,7 +5,7 @@ import random
 retval = 0
 
 #creates a list of random coprimes in the range of 2 through the n value (aka keyVal)
-def randNumList(keyVal):
+def randNumList(keyVal, p, q):
     newList = []
     for i in range(2,keyVal):
         if i != p and i != q:
@@ -27,7 +27,7 @@ def modinv(a, m):
     return x%m
 
 #encrypt function off the equation {[(n+1)^m] * (r^n)} % (n^2)
-def encryptVote(usrVote, randInt, voteVal): 
+def encryptVote(randInt, voteVal, n):
     if voteVal == 0:
         return 0
     equationPartOne = (n+1) ** voteVal                #{[(n+1)^m]
@@ -55,7 +55,7 @@ def powerMod(A, N, M):
     return(retval % M)
 
 #decryption function (not even going to bother iterating through the equation because it's weird)
-def decryptTotal(total):
+def decryptTotal(total, lam, n, mu):
     power_mod = powerMod(total, lam, (n**2))
     result = int((power_mod - 1) / n)
     result = result * mu

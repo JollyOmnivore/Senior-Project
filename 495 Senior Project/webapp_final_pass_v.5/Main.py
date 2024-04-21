@@ -1,22 +1,39 @@
 #Willow Progress:
-# Step One, lets get all the personal info/session stuff into a session value.
-#These are more secure than just passing the values VIA template vars or cookies,
-#and it's cryptographically signed with the secret key, meaning users can see, not touch.
-#Session hierarchy:
-# Flask Login : current_user
+#Done:
+#   +Fix session issues using current_user in place of template shenanigans
+#       Flask Login : current_user
 #               <DEFAULT> login_user(UserSQLObject)
 #                         current_user.is_authenticated
 #                         current_user.username
 #               <END>     logout_user()
-# Flask       : session[stringkey] : Tracks through session, can get in html/jinja
+#       Flask       : session[stringkey] : Tracks through session, can get in html/jinja
 #               <DEFAULT> session['username'] = <string>
 #               <DEFAULT> session['loggedin'] = <bool>
 #                         session['string'] = <most data types>
 #               <END>     session.pop('stringkey', None) #do this for all of them you create
-
+#   +Clean up repeat code around server and set up for encryption implementation.
+#   +Prepare to combine files by setting up encryption.py with the functions Joe made.
+#       -These needed modifications to be standalone
+#       -Will need future attention for security
+#       -Implement JSON for big prime to help find root of slowdowns
+#
+#   To-Do:
+#   Ad-infinium: Fix math errors/security flaws
+#   1.Fix(?) Create account? Still getting warnings but it still runs so idk.
+#   2.Fully implement Create Vote.
+#       - Generate p q values and do math accordingly
+#       - Fill database accordingly
+#       - Disallow users from voting when no vote active
+#       - Implement timer section of create vote
+#       - Make sure users can access vote results after.
+#   3.Fully implement voting
+#       - Make sure all votes arive in time.
+#       - Simulate tests (steal old Joe script?)
+#       -
 from flask import *
 from flask_sqlalchemy import *
 from flask_login import *
+from encryption import *
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.sqlite'
@@ -122,7 +139,7 @@ def currentVote():
         return render_template('Current vote.html')
 
 
-@app.route('/CreateVote', methods=['GET', 'POST'])
+@app.route('/createVote', methods=['GET', 'POST'])
 @login_required
 def createVote():
     if request.method == 'GET':
@@ -143,7 +160,7 @@ def createVote():
         print(option2)
         print(option3)
         print(option4)
-        return redirect('/')
+        return redirect('/currentVote')
 
 
 @app.route('/update', methods=['GET', 'POST'])
@@ -182,7 +199,7 @@ def logout():
 @app.errorhandler(404)
 @app.errorhandler(401)
 def functionToRun(err):
-    # I don't know why we have a user query here but whatever. users isnt refenced in navbar or errpg?
+    # I don't know why we have a user query here but whatever. users aren't refenced in navbar or errpg?
     return render_template('errorpage.html', users=User.query.all(), err=err)
 
 
