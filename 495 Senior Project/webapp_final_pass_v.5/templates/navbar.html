@@ -7,18 +7,16 @@
     <link rel="shortcut icon" type="image/x-icon" href="/static/Icon.ico" />
 </head>
 <body>
-
-{% if current_user.is_authenticated %}
 <nav class="nav">
+{% if current_user.username == "Admin" %}
+    <a href="/createVote">Create Vote</a>
+    <a href="/">End Vote</a>
+{% if current_user.is_authenticated %}
     <a href="currentVote">Current Vote</a>
     <a href="/">About us</a>
     <a href="/profile">Profile</a>
     <a href="/logout">Logout</a>
-{% if current_user.username == "Admin" %}
-    <a href="/createVote">Create Vote</a>
-    <a href="/">End Vote</a>
 {% endif %}
-
 </nav>
 
 {% else %}
