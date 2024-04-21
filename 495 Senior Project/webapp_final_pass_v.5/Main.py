@@ -121,7 +121,7 @@ def create():
         username = request.form['username']
         password = request.form['password']
         if not User.query.filter_by(username=username).all():
-            user = User(username=username, password=password, name=name)
+            user = User(username, password, name)
             db.session.add(user)
             print("session add")
             db.session.commit()
