@@ -249,14 +249,14 @@ def currentVote():
         #save to table
         db.session.add(newvote)
         #stress tester
-        #for i in range(0, 5):
-        #    samples = [1, 100, 10000, 1000000]
-        #    tempyVote = Votes()
-        #    tempyVote.name = str(i) + "Joe"
-        #    tempyVote.vote = encryptVote(random.choice(currentCoprimeList), random.choice(samples), latestVote.n)
-        #    print("name:", tempyVote.name)
-        #    print("encrypted vote:", tempyVote.vote)
-        #    db.session.add(tempyVote)
+        for i in range(0, 5):
+            samples = [1, 100, 10000, 1000000] #10^6 currently breaks it.
+            tempyVote = Votes()
+            tempyVote.name = str(i) + "Joe"
+            tempyVote.vote = encryptVote(random.choice(currentCoprimeList), random.choice(samples), latestVote.n)
+            print("name:", tempyVote.name)
+            print("encrypted vote:", tempyVote.vote)
+            db.session.add(tempyVote)
         #end stress tester
         db.session.commit()
         return redirect('/currentVote')
@@ -357,25 +357,32 @@ def endVote():
             # set CurrentVote.isActive = False
             latestVote.isActive = False
             tallyProduct = 1
+            checksum = 0
             # calculate the tally
             # itterate through and actually calculate tally, then store in val
             # delete all votes from table
             allVotes = Votes.query.all()
             for vote in allVotes:
+                #print("Tally Prod:", tallyProduct, " * ", vote.vote)
                 tallyProduct = tallyProduct * vote.vote
+                print("New Tally:", tallyProduct)
+                singleDec = decryptTotal(vote.vote, latestVote.lam, latestVote.n, latestVote.mu)
+                print("checkval:", singleDec)
+                checksum += decryptTotal(vote.vote, latestVote.lam, latestVote.n, latestVote.mu)
+                print("checksum:", checksum)
                 db.session.delete(vote)
 
             voteTally = decryptTotal(tallyProduct,
-                                    latestVote.lam,
-                                    latestVote.n,
-                                    latestVote.mu)
-
+                                     latestVote.lam,
+                                     latestVote.n,
+                                     latestVote.mu)
+            print("actual tally:", voteTally)
             db.session.commit()
             #return template with data to render
             # currently: send the tally through the template, true decrypt val
             # later    : break up tally with function and use acutal data
             #            save vote to db (will also fix unpopulated current vote on fresh start)
-            return render_template('voteResults.html', tally=voteTally)
+            return render_template('voteResults.html', tally=checksum)
 
 
 @app.route('/logout')

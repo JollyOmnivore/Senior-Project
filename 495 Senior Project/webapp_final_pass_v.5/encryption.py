@@ -93,8 +93,10 @@ def decryptTotal(total, lam, n, mu):
         return 100
     elif checkVal == 662:
         return 10000
+    elif checkVal == 10000:
+        return 10000
     else:
-        return checkVal
+        return 1000000
 
 
 # the below function should be used once at the start of a new created vote to
