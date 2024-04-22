@@ -97,14 +97,16 @@ def decryptTotal(total, lam, n, mu):
         return checkVal
 
 
-# the below function should be used once at the start of a new created vote to generate the n, lam, p, q, mu, and list of r values
+# the below function should be used once at the start of a new created vote to
+# generate the n, lam, p, q, mu, and list of r values
 def createVals():
     listOfPrimes = prime_range(200, 500)
-    p = random.choice(listOfPrimes)
-    q = random.choice(listOfPrimes)
+    p = random.choice(listOfPrimes) #swap to primesListBig
+    q = random.choice(listOfPrimes) #when json time
     while p == q:
-        q = random.choice(listOfPrimes)
+        q = random.choice(listOfPrimes) #here too
     n = p * q
     lam = (p - 1) * (q - 1)
     mu = modinv(lam, n)
-    coprimeList = randNumList(n)
+    coprimeList = randNumList(n, p, q)
+    return n, lam, mu, coprimeList

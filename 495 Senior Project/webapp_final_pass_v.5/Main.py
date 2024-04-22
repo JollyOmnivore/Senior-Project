@@ -19,15 +19,15 @@
 #
 #   To-Do:
 #   Ad-infinium: Fix math errors/security flaws
-#   1.Fix(?) Create account? Still getting warnings but it still runs so IDK.
-#   2.Fully implement Create Vote.
+#   0.5JSON is ready, just needs to be implemented.
+#   1. Fully implement Create Vote.
 #       - Generate p q values and do math accordingly
 #       - Fill database accordingly
 #       - Disallow users from voting when no vote active
 #       - Implement timer section of create vote
 #           + Time is already imported
 #       - Make sure users can access vote results after.
-#   3.Fully implement voting
+#   2. Fully implement voting
 #       - Make sure all votes arive in time.
 #       - Simulate tests (steal old Joe script?)
 
@@ -41,6 +41,13 @@ from encryption import *
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.sqlite'
 db = SQLAlchemy(app)
+
+currentCoprimeList = []
+
+
+def clearCoprimeList():
+    if currentCoprimeList:
+        currentCoprimeList.clear()
 
 
 class User(UserMixin, db.Model):
@@ -71,6 +78,26 @@ class CurrentVote(db.Model):
     option2Total = db.Column(db.Integer())
     option3Total = db.Column(db.Integer())
     option4Total = db.Column(db.Integer())
+
+
+def printVote(currentVote, valList):
+    print(currentVote.question)
+    print(currentVote.option1)
+    print(currentVote.option2)
+    print(currentVote.option3)
+    print(currentVote.option4)
+    print("n=", currentVote.n, "\n",
+          "lam=", currentVote.lam, "\n",
+          "mu=", currentVote.mu)
+    print("isActive=", currentVote.isActive)
+    print(currentVote.option1Total)
+    print(currentVote.option2Total)
+    print(currentVote.option3Total)
+    print(currentVote.option4Total)
+    print("coprime list len=", len(valList))
+    #print("coprime list: ")
+    #for val in valList:
+    #    print(val)
 
 
 app.secret_key = 'alksdifa;lksdif;alksdifa;lksdifa;lksdfj'
@@ -121,7 +148,10 @@ def create():
         username = request.form['username']
         password = request.form['password']
         if not User.query.filter_by(username=username).all():
-            user = User(username, password, name)
+            user = User()
+            user.username = username
+            user.password = password
+            user.name = name
             db.session.add(user)
             print("session add")
             db.session.commit()
@@ -139,6 +169,7 @@ def create():
 @login_required  # uncomment to make login required
 def currentVote():
     if request.method == 'GET':
+
         return render_template('currentVote.html')
 
 
@@ -147,22 +178,47 @@ def currentVote():
 def createVote():
     if request.method == 'GET':
         if current_user.username == "Admin":
+            # note to self: add a thing here to warn that creating a vote
+            #will delete any vote in progress.
             return render_template('createVote.html')
         else:
             return redirect('/')
     elif request.method == 'POST':
         #add code to delete the last "CurrentVote"
-        question = request.form['question']
-        option1 = request.form['option1']
-        option2 = request.form['option2']
-        option3 = request.form['option3']
-        option4 = request.form['option4']
-        #add code to generate lam, mu , n
-        print(question)
-        print(option1)
-        print(option2)
-        print(option3)
-        print(option4)
+        #for now we will always wipe the active vote, there will
+        #only be one active vote at a time. for now, It's what we
+        #can do for the meeting tommorow.
+
+        #prepare by initiallizing all vote values
+        #if CurrentVote exsists, clear table and coprime list
+        deleteVote = CurrentVote.query.filter_by(id=1).first()
+        if deleteVote:
+            db.session.delete(deleteVote)
+            db.session.commit()
+            clearCoprimeList()
+
+        #create vote and populate values
+        tempVote = CurrentVote()
+        tempVote.question = request.form['question']
+        tempVote.option1 = request.form['option1']
+        tempVote.option2 = request.form['option2']
+        tempVote.option3 = request.form['option3']
+        tempVote.option4 = request.form['option4']
+        tempVote.n, tempVote.lam, tempVote.mu, currentCoprimeList = createVals()
+        tempVote.isActive = True
+        tempVote.option1Total = 0
+        tempVote.option2Total = 0
+        tempVote.option3Total = 0
+        tempVote.option4Total = 0
+
+        #commit to db
+        db.session.add(tempVote)
+        db.session.commit()
+
+        # debug!!! Make sure the vote creates correct!
+        debugVote = CurrentVote.query.filter_by(id=1).first()
+        printVote(debugVote, currentCoprimeList)
+
         return redirect('/currentVote')
 
 
@@ -207,5 +263,5 @@ def functionToRun(err):
 if __name__ == '__main__':
     random.seed(time.time_ns())
     testingIndex = int(random.randint(0, len(primesListBig)))
-    print(testingIndex)
+    print("debugValue: ", testingIndex)
     app.run(debug=True)
