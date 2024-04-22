@@ -82,6 +82,7 @@ def powerMod(A, N, M):
 
 
 # decryption function (not even going to bother iterating through the equation because it's weird)
+#very dirty apparently
 def decryptTotal(total, lam, n, mu):
     power_mod = powerMod(total, lam, (n ** 2))
     result = int((power_mod - 1) / n)
@@ -95,8 +96,10 @@ def decryptTotal(total, lam, n, mu):
         return 10000
     elif checkVal == 10000:
         return 10000
-    else:
+    elif 10000 < checkVal < 1000000:
         return 1000000
+    else:
+        return checkVal
 
 
 # the below function should be used once at the start of a new created vote to

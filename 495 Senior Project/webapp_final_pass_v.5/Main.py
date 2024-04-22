@@ -21,23 +21,15 @@
 #   To-Do:
 #   Ad-infinium: Fix math errors/security flaws
 #   0.5JSON is ready, just needs to be implemented.
-#   1. Fully implement Create Vote.
-#       - Generate p q values and do math accordingly
-#       - Fill database accordingly
-#       - Disallow users from voting when no vote active
-#       - Implement timer section of create vote
-#           + Time is already imported
-#       - Make sure users can access vote results after.
-#   2. Fully implement voting
-#       - Make sure all votes arive in time.
-#       - Simulate tests (steal old Joe script?)
+#   1. Live user vote updating on /currentVote while vote active
+#   2. Admin view vote history
+#   3. Users view vote history
 import random
 
 from flask import *
 from flask_sqlalchemy import *
 from flask_login import *
 from encryption import *
-
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.sqlite'
@@ -83,6 +75,20 @@ class CurrentVote(db.Model):
     p = db.Column(db.Integer())
     q = db.Column(db.Integer())
     isActive = db.Column(db.Boolean())
+    option1Total = db.Column(db.Integer())
+    option2Total = db.Column(db.Integer())
+    option3Total = db.Column(db.Integer())
+    option4Total = db.Column(db.Integer())
+
+
+class PastVote(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    question = db.Column(db.String(100))
+    option1 = db.Column(db.String(100))
+    option2 = db.Column(db.String(100))
+    option3 = db.Column(db.String(100))
+    option4 = db.Column(db.String(100))
+
     option1Total = db.Column(db.Integer())
     option2Total = db.Column(db.Integer())
     option3Total = db.Column(db.Integer())
@@ -211,10 +217,10 @@ def currentVote():
                 # if user vote not found, send to vote page
                 if not Votes.query.filter_by(name=session['name']).first():
                     return render_template('vote.html', op1=latestVote.option1,
-                                                                          op2=latestVote.option2,
-                                                                          op3=latestVote.option3,
-                                                                          op4=latestVote.option4,
-                                                                          quest=latestVote.question)
+                                           op2=latestVote.option2,
+                                           op3=latestVote.option3,
+                                           op4=latestVote.option4,
+                                           quest=latestVote.question)
                 #else user voted, send to votechart with all votes data
                 else:
                     voteData = Votes.query.all()
@@ -225,9 +231,9 @@ def currentVote():
                 #will leave this for now as graphing it will require a graphing tool and
                 # sending said graph through template/alternative. Problem for later.
                 return render_template('voteResults.html', opt1=latestVote.option1Total,
-                                                                            opt2=latestVote.option2Total,
-                                                                            opt3=latestVote.option3Total,
-                                                                            opt4=latestVote.option4Total)
+                                       opt2=latestVote.option2Total,
+                                       opt3=latestVote.option3Total,
+                                       opt4=latestVote.option4Total)
     #Post request handling
     elif request.method == 'POST':
         #for now we will encrypt the vote here. it's not secure, but for now we just need it to work
@@ -250,7 +256,7 @@ def currentVote():
         db.session.add(newvote)
         #stress tester
         for i in range(0, 5):
-            samples = [1, 100, 10000, 1000000] #10^6 currently breaks it.
+            samples = [1, 100, 10000, 1000000]  #10^6 currently breaks the big decrypt.
             tempyVote = Votes()
             tempyVote.name = str(i) + "Joe"
             tempyVote.vote = encryptVote(random.choice(currentCoprimeList), random.choice(samples), latestVote.n)
@@ -335,6 +341,11 @@ def update():
 @login_required
 def profile():
     if request.method == 'GET':
+        if current_user.username != "Admin" or session['name'] != "Admin":
+            all_votes = PastVote.query.all()
+            for vote in all_votes:
+                print("Question:", vote.question)
+            return render_template('profile.html', votes=all_votes)
         return render_template('profile.html')
 
 
@@ -371,17 +382,35 @@ def endVote():
                 checksum += decryptTotal(vote.vote, latestVote.lam, latestVote.n, latestVote.mu)
                 print("checksum:", checksum)
                 db.session.delete(vote)
-
+            #calc and print tally
             voteTally = decryptTotal(tallyProduct,
                                      latestVote.lam,
                                      latestVote.n,
                                      latestVote.mu)
-            print("actual tally:", voteTally)
+            print("tally:", tallyProduct)
+            print("decrypt:", checksum)
+
+            saveVote = PastVote()
+            saveVote.question = latestVote.question
+            saveVote.option1 = latestVote.option1
+            saveVote.option2 = latestVote.option2
+            saveVote.option3 = latestVote.option3
+            saveVote.option4 = latestVote.option4
+
+            splInt = str(checksum)
+            a = splInt[0:1]
+            b = splInt[2:3]
+            c = splInt[4:5]
+            d = splInt[6:]
+            saveVote.option1Total = a
+            saveVote.option2Total = b
+            saveVote.option3Total = c
+            saveVote.option4Total = d
+            db.session.add(saveVote)
             db.session.commit()
             #return template with data to render
-            # currently: send the tally through the template, true decrypt val
-            # later    : break up tally with function and use acutal data
-            #            save vote to db (will also fix unpopulated current vote on fresh start)
+            # currently: send the tally through the template, stacked decrypt val/checksum
+            # later    : use acutal data and display visuals instead of just tally
             return render_template('voteResults.html', tally=checksum)
 
 

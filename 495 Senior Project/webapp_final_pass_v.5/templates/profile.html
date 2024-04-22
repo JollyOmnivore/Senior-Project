@@ -45,6 +45,42 @@
     <h3>{{current_user.username}}</h3>
     <a href="/update">Change Password</a>
 </div>
+
+{% if current_user.username == "Admin" %}
+<div>
+    <h2>History:</h2>
+    <table>
+    <thead>
+        <tr>
+            <th>Question</th>
+            <th>Option 1</th>
+            <th>Option 2</th>
+            <th>Option 3</th>
+            <th>Option 4</th>
+            <th>Option 1 Total</th>
+            <th>Option 2 Total</th>
+            <th>Option 3 Total</th>
+            <th>Option 4 Total</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for vote in votes %}
+        <tr>
+            <td>{{ vote.question }}</td>
+            <td>{{ vote.option1 }}</td>
+            <td>{{ vote.option2 }}</td>
+            <td>{{ vote.option3 }}</td>
+            <td>{{ vote.option4 }}</td>
+            <td>{{ vote.option1Total }}</td>
+            <td>{{ vote.option2Total }}</td>
+            <td>{{ vote.option3Total }}</td>
+            <td>{{ vote.option4Total }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+{% endif %}
 {% endblock %}
 </body>
 </html>
