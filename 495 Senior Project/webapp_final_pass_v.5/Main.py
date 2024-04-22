@@ -1,15 +1,16 @@
 #Willow Progress:
 #Done:
 #   +Fix session issues using current_user in place of template shenanigans
-#       Flask Login : current_user
+#       Flask Login : current_user       : Persistent thru disconects, can get in html/jinja
 #               <DEFAULT> login_user(UserSQLObject)
 #                         current_user.is_authenticated
 #                         current_user.username
 #               <END>     logout_user()
-#       Flask       : session[stringkey] : Tracks through session, can get in html/jinja
+#       Flask       : session[stringkey] : Not persistent thru disc, can get in html/jinja
 #               <DEFAULT> session['username'] = <string>
 #               <DEFAULT> session['loggedin'] = <bool>
 #                         session['string'] = <most data types>
+#               <using>   session['name'] = user.name
 #               <END>     session.pop('stringkey', None) #do this for all of them you create
 #   +Clean up repeat code around server and set up for encryption implementation.
 #   +Prepare to combine files by setting up encryption.py with the functions Joe made.
@@ -30,7 +31,7 @@
 #   2. Fully implement voting
 #       - Make sure all votes arive in time.
 #       - Simulate tests (steal old Joe script?)
-
+import random
 
 from flask import *
 from flask_sqlalchemy import *
@@ -48,6 +49,11 @@ currentCoprimeList = []
 def clearCoprimeList():
     if currentCoprimeList:
         currentCoprimeList.clear()
+
+
+def refreshCoprimeList(n, p, q):
+    global currentCoprimeList
+    currentCoprimeList = randNumList(n, p, q)
 
 
 class User(UserMixin, db.Model):
@@ -73,6 +79,9 @@ class CurrentVote(db.Model):
     lam = db.Column(db.Integer())
     mu = db.Column(db.Integer())
     n = db.Column(db.Integer())
+    #added p and q to regen coprimes when coprime list shits the bed
+    p = db.Column(db.Integer())
+    q = db.Column(db.Integer())
     isActive = db.Column(db.Boolean())
     option1Total = db.Column(db.Integer())
     option2Total = db.Column(db.Integer())
@@ -87,6 +96,8 @@ def printVote(currentVote, valList):
     print(currentVote.option3)
     print(currentVote.option4)
     print("n=", currentVote.n, "\n",
+          "p=", currentVote.p, "\n",
+          "q=", currentVote.q, "\n",
           "lam=", currentVote.lam, "\n",
           "mu=", currentVote.mu)
     print("isActive=", currentVote.isActive)
@@ -114,8 +125,18 @@ def load_user(uid):
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/about', methods=['GET', 'POST'])
 def home():
-    loggedin = current_user.is_authenticated
-    print(loggedin)  # add if case is false then don't get username
+    print("coprime list len:", len(currentCoprimeList))
+    #session refresher: include here if someone logged in is comming back
+    #since they always go home first, we can run this when they get to home and
+    #recache their session data so if they go to current vote they'll have ['name']
+    if current_user.is_authenticated:
+        tempUser = User.query.filter_by(username=current_user.username).first()
+        session['name'] = tempUser.name
+    #repopulate coprimes if active vote
+    active = CurrentVote.query.filter_by(id=1).first()
+    if active:
+        if active.isActive:
+            refreshCoprimeList(active.n, active.p, active.q)
     return render_template('about.html')
 
 
@@ -130,8 +151,7 @@ def login():
         if user is not None and password == user.password:
             print("try to log in")
             login_user(user)
-            session['username'] = user.username
-            session['loggedin'] = True
+            session['name'] = user.name
             print("logged in apparently")
             return redirect('/')
         else:
@@ -157,8 +177,7 @@ def create():
             db.session.commit()
             print("session commit")
             login_user(user)
-            session['username'] = user.username
-            session['loggedin'] = True
+            session['name'] = user.name
             print("login")
             return redirect('/')
         else:
@@ -166,16 +185,88 @@ def create():
 
 
 @app.route('/currentVote', methods=['GET', 'POST'])
-@login_required  # uncomment to make login required
+@login_required
 def currentVote():
-    if request.method == 'GET':
+    print("coprime list len:", len(currentCoprimeList))
+    #GET CASES:
+    # 1. User who hasn't voted/active vote open
+    #   + Send to vote
+    # 2. User who has voted/active vote open
+    #   + Send to votes chart, display contents of votes table (live/till close)
+    # 3. User who has voted/active vote closed + User sent from prev +
+    #   + Send to graph page. (MAKE SURE ACTIVE VOTE CLOSED BEFORE DECRYPT)
 
-        return render_template('currentVote.html')
+    #Just in case, secret edge case if no vote exsists to display. Should never
+    #be the case though....
+    if request.method == 'GET':
+        latestVote = CurrentVote.query.filter_by(id=1).first()
+        if not latestVote:
+            print("err, no vote? Something's wrong...")
+            return redirect('/')
+
+        #Now Actual Get cases
+        else:
+            #If vote is active, query votes to see if current_user has voted
+            if latestVote.isActive:
+                # if user vote not found, send to vote page
+                if not Votes.query.filter_by(name=session['name']).first():
+                    return render_template('vote.html', op1=latestVote.option1,
+                                                                          op2=latestVote.option2,
+                                                                          op3=latestVote.option3,
+                                                                          op4=latestVote.option4,
+                                                                          quest=latestVote.question)
+                #else user voted, send to votechart with all votes data
+                else:
+                    voteData = Votes.query.all()
+                    return render_template('voteChart.html', voteData=voteData)
+
+            #If vote is not active, send user to graph page with data
+            else:
+                #will leave this for now as graphing it will require a graphing tool and
+                # sending said graph through template/alternative. Problem for later.
+                return render_template('voteResults.html', opt1=latestVote.option1Total,
+                                                                            opt2=latestVote.option2Total,
+                                                                            opt3=latestVote.option3Total,
+                                                                            opt4=latestVote.option4Total)
+    #Post request handling
+    elif request.method == 'POST':
+        #for now we will encrypt the vote here. it's not secure, but for now we just need it to work
+        #we should try and move encryption to JS on the clientside so we can just send the vote
+        voteVal = request.form['chosenValue']
+        print("recieved vote:", voteVal)
+        #debug: check coprime list to see if any values exist. (wtf)
+        #encrypt vote
+        latestVote = CurrentVote.query.filter_by(id=1).first()
+        if len(currentCoprimeList) <= 0:
+            refreshCoprimeList(latestVote.n, latestVote.p, latestVote.q)
+        encVote = encryptVote(random.choice(currentCoprimeList), int(voteVal), latestVote.n)
+        print("name:", session['name'])
+        print("encrypted vote:", encVote)
+        #create and populate vote object
+        newvote = Votes()
+        newvote.name = session['name']
+        newvote.vote = encVote
+        #save to table
+        db.session.add(newvote)
+        #stress tester
+        #for i in range(0, 5):
+        #    samples = [1, 100, 10000, 1000000]
+        #    tempyVote = Votes()
+        #    tempyVote.name = str(i) + "Joe"
+        #    tempyVote.vote = encryptVote(random.choice(currentCoprimeList), random.choice(samples), latestVote.n)
+        #    print("name:", tempyVote.name)
+        #    print("encrypted vote:", tempyVote.vote)
+        #    db.session.add(tempyVote)
+        #end stress tester
+        db.session.commit()
+        return redirect('/currentVote')
 
 
 @app.route('/createVote', methods=['GET', 'POST'])
 @login_required
 def createVote():
+    global currentCoprimeList
+    print("coprime list len:", len(currentCoprimeList))
     if request.method == 'GET':
         if current_user.username == "Admin":
             # note to self: add a thing here to warn that creating a vote
@@ -204,7 +295,7 @@ def createVote():
         tempVote.option2 = request.form['option2']
         tempVote.option3 = request.form['option3']
         tempVote.option4 = request.form['option4']
-        tempVote.n, tempVote.lam, tempVote.mu, currentCoprimeList = createVals()
+        tempVote.n, tempVote.p, tempVote.q, tempVote.lam, tempVote.mu, currentCoprimeList = createVals()
         tempVote.isActive = True
         tempVote.option1Total = 0
         tempVote.option2Total = 0
@@ -247,10 +338,51 @@ def profile():
         return render_template('profile.html')
 
 
+@app.route('/endVote')
+@login_required
+def endVote():
+    #make sure its "Admin"
+    #if not, redir to home
+    if current_user.username != "Admin" or session['name'] != "Admin":
+        return redirect('/')
+    #else check current vote
+    else:
+        latestVote = CurrentVote.query.filter_by(id=1).first()
+        #check if already set to False, redir if so
+        if not latestVote.isActive:
+            return redirect('/')
+        #if true, vote MUST BE ACTIVE AND ADMIN USER.
+        #ending the vote:
+        else:
+            # set CurrentVote.isActive = False
+            latestVote.isActive = False
+            tallyProduct = 1
+            # calculate the tally
+            # itterate through and actually calculate tally, then store in val
+            # delete all votes from table
+            allVotes = Votes.query.all()
+            for vote in allVotes:
+                tallyProduct = tallyProduct * vote.vote
+                db.session.delete(vote)
+
+            voteTally = decryptTotal(tallyProduct,
+                                    latestVote.lam,
+                                    latestVote.n,
+                                    latestVote.mu)
+
+            db.session.commit()
+            #return template with data to render
+            # currently: send the tally through the template, true decrypt val
+            # later    : break up tally with function and use acutal data
+            #            save vote to db (will also fix unpopulated current vote on fresh start)
+            return render_template('voteResults.html', tally=voteTally)
+
+
 @app.route('/logout')
 @login_required
 def logout():
     logout_user()
+    session.pop('name', None)
     return redirect('/')
 
 
@@ -264,4 +396,4 @@ if __name__ == '__main__':
     random.seed(time.time_ns())
     testingIndex = int(random.randint(0, len(primesListBig)))
     print("debugValue: ", testingIndex)
-    app.run(debug=True)
+    app.run()

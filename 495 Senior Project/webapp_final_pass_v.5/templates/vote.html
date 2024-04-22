@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Current vote</title>
+    <link rel="stylesheet" href="static/homestyle.css">
+</head>
+<body>
+{% extends "navbar.html" %}
+
+{% block content %}
+
+
+<style>
+h1 {
+  text-align: center;
+}
+h3 {
+  text-align: center;
+}
+body {
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+}
+form {
+   display: flex;
+   justify-content: center;
+   align-items: center;
+   height: 10px;
+}
+</style>
+
+
+<h1>{{ quest }}</h1>
+
+<h3>Chosen Option: <span id="visibleValue"></span></h3>
+<div class="btn-group">
+  <button class="option-btn" value="{{ op1 }}" id="1">{{ op1 }}</button>
+  <button class="option-btn" value="{{ op2 }}" id="100">{{ op2 }}</button>
+</div>
+<div class="btn-group">
+  <button class="option-btn" value="{{ op3 }}" id="10000">{{ op3 }}</button>
+  <button class="option-btn" value="{{ op4 }}" id="1000000">{{ op4 }}</button>
+</div>
+
+<h3><!--Your Vote is: 321871423734 --></h3>
+
+<form action="/currentVote" method="post">
+    <input type="hidden" id="chosenValue" name="chosenValue" value="">
+    <button type="submit">Submit Vote</button>
+</form>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var btns = document.getElementsByClassName('option-btn');
+        for (var i = 0; i < btns.length; i++) {
+            btns[i].addEventListener('click', function() {
+                document.getElementById('visibleValue').innerText = this.value; // storing the button id in visible field.
+                document.getElementById('chosenValue').value = this.id; // storing the button value in the hidden field.
+            });
+        }
+    });
+</script>
+{% endblock %}
+</body>
+</html>

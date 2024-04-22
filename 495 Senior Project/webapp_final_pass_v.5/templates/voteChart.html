@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Current vote</title>
+    <link rel="stylesheet" href="static/homestyle.css">
+</head>
+<body>
+{% extends "navbar.html" %}
+
+{% block content %}
+
+<table>
+        <tr>
+            <th>Name</th>
+            <th>Vote</th>
+
+        </tr>
+        {% for voteLog in voteData %}
+            <tr>
+                <td>{{ voteLog.name }}</td>
+                <td>{{ voteLog.vote }}</td>
+                <!-- Add more data as necessary... -->
+            </tr>
+        {% endfor %}
+    </table>
+
+
+{% endblock %}
+</body>
+</html>

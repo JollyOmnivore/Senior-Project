@@ -11,7 +11,7 @@
     {% if current_user.is_authenticated %}
         {% if current_user.username == "Admin" %}
             <a href="/createVote">Create Vote</a>
-            <a href="/">End Vote</a>
+            <a href="/endVote">End Vote</a>
         {% endif %}
         <a href="currentVote">Current Vote</a>
         <a href="/">About us</a>

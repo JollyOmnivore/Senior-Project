@@ -109,4 +109,4 @@ def createVals():
     lam = (p - 1) * (q - 1)
     mu = modinv(lam, n)
     coprimeList = randNumList(n, p, q)
-    return n, lam, mu, coprimeList
+    return n, p, q, lam, mu, coprimeList
