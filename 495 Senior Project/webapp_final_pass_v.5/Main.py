@@ -24,12 +24,19 @@
 #   1. Live user vote updating on /currentVote while vote active
 #   2. Admin view vote history
 #   3. Users view vote history
-import random
+
+# Muskat Notes:
+# +make sure no vote birthdays (check r and vote)
+# +needs product on buletin
+# +mod out products for the product
+# +MAKE SURE TALLY SHOWS FOR USERS (with product)
+# +Log the encrypted data for the user (FOR THE CURRENT VOTE)
 
 from flask import *
 from flask_sqlalchemy import *
 from flask_login import *
 from encryption import *
+from sqlalchemy import desc
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.sqlite'
@@ -139,9 +146,10 @@ def home():
         tempUser = User.query.filter_by(username=current_user.username).first()
         session['name'] = tempUser.name
     #repopulate coprimes if active vote
-    active = CurrentVote.query.filter_by(id=1).first()
+    active = CurrentVote.query.order_by(desc(CurrentVote.id)).first()
+    #active = CurrentVote.query.first()
     if active:
-        if active.isActive:
+        if active.isActive and len(currentCoprimeList) < 1:
             refreshCoprimeList(active.n, active.p, active.q)
     return render_template('about.html')
 
@@ -205,7 +213,7 @@ def currentVote():
     #Just in case, secret edge case if no vote exsists to display. Should never
     #be the case though....
     if request.method == 'GET':
-        latestVote = CurrentVote.query.filter_by(id=1).first()
+        latestVote = CurrentVote.query.order_by(desc(CurrentVote.id)).first()
         if not latestVote:
             print("err, no vote? Something's wrong...")
             return redirect('/')
@@ -230,10 +238,7 @@ def currentVote():
             else:
                 #will leave this for now as graphing it will require a graphing tool and
                 # sending said graph through template/alternative. Problem for later.
-                return render_template('voteResults.html', opt1=latestVote.option1Total,
-                                       opt2=latestVote.option2Total,
-                                       opt3=latestVote.option3Total,
-                                       opt4=latestVote.option4Total)
+                return render_template('voteResults.html', latestVote=latestVote)
     #Post request handling
     elif request.method == 'POST':
         #for now we will encrypt the vote here. it's not secure, but for now we just need it to work
@@ -242,7 +247,8 @@ def currentVote():
         print("recieved vote:", voteVal)
         #debug: check coprime list to see if any values exist. (wtf)
         #encrypt vote
-        latestVote = CurrentVote.query.filter_by(id=1).first()
+        latestVote = CurrentVote.query.order_by(desc(CurrentVote.id)).first()
+
         if len(currentCoprimeList) <= 0:
             refreshCoprimeList(latestVote.n, latestVote.p, latestVote.q)
         encVote = encryptVote(random.choice(currentCoprimeList), int(voteVal), latestVote.n)
@@ -255,14 +261,14 @@ def currentVote():
         #save to table
         db.session.add(newvote)
         #stress tester
-        for i in range(0, 5):
-            samples = [1, 100, 10000, 1000000]  #10^6 currently breaks the big decrypt.
-            tempyVote = Votes()
-            tempyVote.name = str(i) + "Joe"
-            tempyVote.vote = encryptVote(random.choice(currentCoprimeList), random.choice(samples), latestVote.n)
-            print("name:", tempyVote.name)
-            print("encrypted vote:", tempyVote.vote)
-            db.session.add(tempyVote)
+        #for i in range(0, 10):
+        #    samples = [1, 100, 10000, 1000000]  #10^6 currently breaks the big decrypt.
+        #    tempyVote = Votes()
+        #   tempyVote.name = str(i) + "Joe"
+        #    tempyVote.vote = encryptVote(random.choice(currentCoprimeList), random.choice(samples), latestVote.n)
+        #    print("name:", tempyVote.name)
+        #    print("encrypted vote:", tempyVote.vote)
+        #    db.session.add(tempyVote)
         #end stress tester
         db.session.commit()
         return redirect('/currentVote')
@@ -288,11 +294,8 @@ def createVote():
 
         #prepare by initiallizing all vote values
         #if CurrentVote exsists, clear table and coprime list
-        deleteVote = CurrentVote.query.filter_by(id=1).first()
-        if deleteVote:
-            db.session.delete(deleteVote)
-            db.session.commit()
-            clearCoprimeList()
+
+        clearCoprimeList()
 
         #create vote and populate values
         tempVote = CurrentVote()
@@ -313,7 +316,7 @@ def createVote():
         db.session.commit()
 
         # debug!!! Make sure the vote creates correct!
-        debugVote = CurrentVote.query.filter_by(id=1).first()
+        debugVote = CurrentVote.query.order_by(desc(CurrentVote.id)).first()
         printVote(debugVote, currentCoprimeList)
 
         return redirect('/currentVote')
@@ -342,7 +345,7 @@ def update():
 def profile():
     if request.method == 'GET':
         if current_user.username != "Admin" or session['name'] != "Admin":
-            all_votes = PastVote.query.all()
+            all_votes = CurrentVote.query.all()
             for vote in all_votes:
                 print("Question:", vote.question)
             return render_template('profile.html', votes=all_votes)
@@ -358,7 +361,7 @@ def endVote():
         return redirect('/')
     #else check current vote
     else:
-        latestVote = CurrentVote.query.filter_by(id=1).first()
+        latestVote = CurrentVote.query.order_by(desc(CurrentVote.id)).first()
         #check if already set to False, redir if so
         if not latestVote.isActive:
             return redirect('/')
@@ -374,13 +377,13 @@ def endVote():
             # delete all votes from table
             allVotes = Votes.query.all()
             for vote in allVotes:
-                #print("Tally Prod:", tallyProduct, " * ", vote.vote)
+                print("Tally Prod:", tallyProduct, " * ", vote.vote)
                 tallyProduct = tallyProduct * vote.vote
                 print("New Tally:", tallyProduct)
                 singleDec = decryptTotal(vote.vote, latestVote.lam, latestVote.n, latestVote.mu)
-                print("checkval:", singleDec)
+                #print("checkval:", singleDec)
                 checksum += decryptTotal(vote.vote, latestVote.lam, latestVote.n, latestVote.mu)
-                print("checksum:", checksum)
+                #print("checksum:", checksum)
                 db.session.delete(vote)
             #calc and print tally
             voteTally = decryptTotal(tallyProduct,
@@ -389,24 +392,18 @@ def endVote():
                                      latestVote.mu)
             print("tally:", tallyProduct)
             print("decrypt:", checksum)
-
-            saveVote = PastVote()
-            saveVote.question = latestVote.question
-            saveVote.option1 = latestVote.option1
-            saveVote.option2 = latestVote.option2
-            saveVote.option3 = latestVote.option3
-            saveVote.option4 = latestVote.option4
+            #save tally to Currentvote, and set to Active = 0. Pivotting away from that stupid, broken
+            #PastVotes table.
 
             splInt = str(checksum)
             a = splInt[0:1]
             b = splInt[2:3]
             c = splInt[4:5]
             d = splInt[6:]
-            saveVote.option1Total = a
-            saveVote.option2Total = b
-            saveVote.option3Total = c
-            saveVote.option4Total = d
-            db.session.add(saveVote)
+            latestVote.option1Total = a
+            latestVote.option2Total = b
+            latestVote.option3Total = c
+            latestVote.option4Total = d
             db.session.commit()
             #return template with data to render
             # currently: send the tally through the template, stacked decrypt val/checksum
@@ -430,6 +427,4 @@ def functionToRun(err):
 
 if __name__ == '__main__':
     random.seed(time.time_ns())
-    testingIndex = int(random.randint(0, len(primesListBig)))
-    print("debugValue: ", testingIndex)
     app.run()

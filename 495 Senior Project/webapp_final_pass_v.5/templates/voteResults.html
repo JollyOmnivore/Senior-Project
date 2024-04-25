@@ -10,8 +10,14 @@
 
 {% block content %}
 <!--Display graph of vote results here!--->
+<!--This should be fairly easy to modify in the future, IDK how to graph with js tho--->
+<h1>{{ latestVote.question }}</h1>
 <h1>TALLY:</h1>
-{{ tally }}
+option 1:   {{ latestVote.option1 }}:{{ latestVote.option1Total }}
+option 2:   {{ latestVote.option2 }}:{{ latestVote.option2Total }}
+option 3:   {{ latestVote.option3 }}:{{ latestVote.option3Total }}
+option 4:   {{ latestVote.option4 }}:{{ latestVote.option4Total }}
+
 {% endblock %}
 </body>
 </html>
