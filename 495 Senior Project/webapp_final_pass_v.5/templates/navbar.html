@@ -15,7 +15,7 @@
         {% endif %}
         <a href="currentVote">Current Vote</a>
         <a href="/">About us</a>
-        <a href="/profile">Profile</a>
+        <a href="/profile">{{ current_user.username }}</a>
         <a href="/logout">Logout</a>
     {% else %}
         <a href="/about">About us</a>

@@ -89,3 +89,44 @@ def createVals():
   lam = (p-1) * (q-1) # get val of p-1 * q-1 for later use & security
   mu = modinv(lam,n) # get mod inverse of lam and n
   return n, p, q, lam, mu, rValsList
+
+
+def tallyUp(actualResult):
+    #init all votes as zeros, just to be sure.
+    totalVotesA\
+        =totalVotesB\
+        =totalVotesC\
+        =totalVotesD\
+        =totalNoVotes\
+        =totalVotersCounted = 0
+
+    while (actualResult - 1000000) >= 0:
+        # print("vote for D")
+        actualResult -= 1000000
+        totalVotesD += 1
+        totalVotersCounted += 1
+
+    # checks for total amount of 'C' vals
+    while (actualResult - 10000) >= 0:
+        # print("vote for C")
+        actualResult -= 10000
+        totalVotesC += 1
+        totalVotersCounted += 1
+
+    # checks for total amount of 'B' vals
+    while (actualResult - 100) >= 0:
+        # print("vote for B")
+        actualResult -= 100
+        totalVotesB += 1
+        totalVotersCounted += 1
+
+    # checks for total amount of 'A' vals
+    while (actualResult - 1) >= 0:
+        # print("vote for A")
+        actualResult -= 1
+        totalVotesA += 1
+        totalVotersCounted += 1
+
+    #Replace with abstain code when ready.
+    #totalNoVotes = 10 - totalVotersCounted
+    return totalVotesA, totalVotesB, totalVotesC, totalVotesD#, totalNoVotes

@@ -61,6 +61,7 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(80), unique=True)
     password = db.Column(db.String(80))
     name = db.Column(db.String(30))
+    lastVote = db.Column(db.Integer)
 
 
 class Votes(db.Model):
@@ -251,14 +252,14 @@ def currentVote():
         #save to table
         db.session.add(newvote)
         #stress tester
-        #for i in range(0, 10):
-        #    samples = [1, 100, 10000, 1000000]  #10^6 currently breaks the big decrypt.
-        #    tempyVote = Votes()
-        #   tempyVote.name = str(i) + "Joe"
-        #    tempyVote.vote = encryptVote(random.choice(currentCoprimeList), random.choice(samples), latestVote.n)
-        #    print("name:", tempyVote.name)
-        #    print("encrypted vote:", tempyVote.vote)
-        #    db.session.add(tempyVote)
+        for i in range(0, 10):
+            samples = [1, 100, 10000, 1000000]  #10^6 currently breaks the big decrypt.
+            tempyVote = Votes()
+            tempyVote.name = str(i) + "Joe"
+            tempyVote.vote = encryptVote(random.choice(currentCoprimeList), random.choice(samples), latestVote.n)
+            print("name:", tempyVote.name)
+            print("encrypted vote:", tempyVote.vote)
+            db.session.add(tempyVote)
         #end stress tester
         db.session.commit()
         return redirect('/currentVote')
@@ -385,8 +386,7 @@ def endVote():
             print("decrypt:", checksum)
 
 
-            splInt = str(checksum)
-            splArr = []
+
             #HOW DO YOU SPLIT AN INT INTO 8 INTS AND MAKE SUREIT WORKS ;-;;;;
             #This makes my head hurt
             #for i in range (0, 8):
@@ -396,10 +396,7 @@ def endVote():
             #        splArr.append(0)
             #print('splInt:', splInt)
             #print('splArr:', splArr)
-            a = splInt[0:1]
-            b = splInt[1:2]
-            c = splInt[2:3]
-            d = splInt[3:4]
+            a, b, c, d = tallyUp(checksum)
             latestVote.option1Total = a
             latestVote.option2Total = b
             latestVote.option3Total = c
