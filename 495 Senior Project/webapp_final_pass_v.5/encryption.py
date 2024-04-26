@@ -8,21 +8,19 @@
     define a checker for coprime nums; i.e., check to see if the only factor shared between n and i is 1
 """
 
-from random import randrange
-from math import pow, gcd, log10
+
+
 import random
 import json
-# time likes being special. IDK why. time is scary.
-import time
+import gmpy2
 
-#prepare json file for array
-random.seed(time.time_ns())
+#prepare json files for arrays
 with open('instance/prime_numbers.json', 'r') as f:
     data = json.load(f)
-
-retval = 0
-primesListSmall = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31]  #11 stored integers for rand selection
 primesListBig = data['10kPrimeList']
+with open('instance/prime_numbers99980001.json', 'r') as k:
+    data = json.load(k)
+rValsList = data['1MPrimeList']
 
 
 # creates a list of random coprimes in the range of 2 through the n value (aka keyVal)
@@ -43,75 +41,51 @@ def egcd(a, b):
 
 
 # working version of modular inverse with exceptions thrown when no modular inverse exists
-def modinv(a, m):
-    g, x, y = egcd(a, m)
-    if g != 1:
-        raise Exception('No modular inverse')
-    return x % m
-
-
-# encrypt function off the equation {[(n+1)^m] * (r^n)} % (n^2)
 def encryptVote(randInt, voteVal, n):
     if voteVal == 0:
         return 0
-    equationPartOne = (n + 1) ** voteVal  # {[(n+1)^m]
-    randomToProduct = randInt ** n  # (r^n)}
-    fullEquation = equationPartOne * randomToProduct  # {[(n+1)^m] * (r^n)}
-    nSquare = n ** 2  # (n^2)
-    result = fullEquation % nSquare  # {[(n+1)^m] * (r^n)} % (n^2)
-    return result
+    equationPartOne = gmpy2.powmod(n+1, voteVal, n**2)
+    randomToProduct = gmpy2.powmod(randInt, n, n**2)
+    fullEquation = gmpy2.mul(equationPartOne, randomToProduct) % (n**2)
+    return int(fullEquation)
 
 
-# prime number generation from a lower bound to an upper bound, stored in a list for ease of access
-def prime_range(lower, upper):
-    prime_list = []
-    for num in range(lower, upper + 1):
-        if num > 1:
-            for i in range(2, num):
-                if (num % i) == 0:
-                    break
-            else:  # I don't know why this works, i don't like that this works, but it works and we don't touch this ever
-                prime_list.append(num)
-    return prime_list
+def modinv(a, m):
+    # Using gmpy2 for computing modular inverse
+    return int(gmpy2.invert(a, m))
 
 
-# powerMod function from sagemath converted to python
 def powerMod(A, N, M):
-    retval = A ** N
-    return (retval % M)
+    return int(gmpy2.powmod(A, N, M))
 
 
-# decryption function (not even going to bother iterating through the equation because it's weird)
-#very dirty apparently
 def decryptTotal(total, lam, n, mu):
-    power_mod = powerMod(total, lam, (n ** 2))
-    result = int((power_mod - 1) / n)
-    result = result * mu
-    checkVal = result % n
-    if checkVal == 1:
-        return 1
-    elif checkVal == 100:
-        return 100
-    elif checkVal == 662:
-        return 10000
-    elif checkVal == 10000:
-        return 10000
-    elif 10000 < checkVal < 1000000:
-        return 1000000
-    else:
-        return checkVal
+    power_mod = powerMod(total, lam, n**2)
+    result = (power_mod - 1) // n
+    result = result * mu % n
+    return int(result)
+# prime number generation from a lower bound to an upper bound, stored in a list for ease of access
 
 
 # the below function should be used once at the start of a new created vote to
 # generate the n, lam, p, q, mu, and list of r values
 def createVals():
-    listOfPrimes = prime_range(200, 500)
-    p = random.choice(listOfPrimes) #swap to primesListBig
-    q = random.choice(listOfPrimes) #when json time
+    p = random.choice(primesListBig) #swap to primesListBig
+    q = random.choice(primesListBig) #when json time
     while p == q:
-        q = random.choice(listOfPrimes) #here too
+        q = random.choice(primesListBig) #here too
     n = p * q
     lam = (p - 1) * (q - 1)
     mu = modinv(lam, n)
-    coprimeList = randNumList(n, p, q)
-    return n, p, q, lam, mu, coprimeList
+
+
+def createVals():
+  p = random.choice(primesListBig) # random prime value 1
+  q = random.choice(primesListBig) # random prime value 2
+  while (p == q) or (p < 6000) or (q < 6000) or (p > 10000) or (q > 10000): # ensures p and q are not the same
+    p = random.choice(primesListBig) # random prime value 1
+    q = random.choice(primesListBig) # random prime value 2
+  n = p * q # get prime product
+  lam = (p-1) * (q-1) # get val of p-1 * q-1 for later use & security
+  mu = modinv(lam,n) # get mod inverse of lam and n
+  return n, p, q, lam, mu, rValsList

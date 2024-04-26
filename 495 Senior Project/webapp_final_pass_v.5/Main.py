@@ -37,6 +37,7 @@ from flask_sqlalchemy import *
 from flask_login import *
 from encryption import *
 from sqlalchemy import desc
+import time
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.sqlite'
@@ -86,20 +87,7 @@ class CurrentVote(db.Model):
     option2Total = db.Column(db.Integer())
     option3Total = db.Column(db.Integer())
     option4Total = db.Column(db.Integer())
-
-
-class PastVote(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    question = db.Column(db.String(100))
-    option1 = db.Column(db.String(100))
-    option2 = db.Column(db.String(100))
-    option3 = db.Column(db.String(100))
-    option4 = db.Column(db.String(100))
-
-    option1Total = db.Column(db.Integer())
-    option2Total = db.Column(db.Integer())
-    option3Total = db.Column(db.Integer())
-    option4Total = db.Column(db.Integer())
+    tally = db.Column(db.Integer())
 
 
 def printVote(currentVote, valList):
@@ -118,6 +106,7 @@ def printVote(currentVote, valList):
     print(currentVote.option2Total)
     print(currentVote.option3Total)
     print(currentVote.option4Total)
+    print(currentVote.tally)
     print("coprime list len=", len(valList))
     #print("coprime list: ")
     #for val in valList:
@@ -220,7 +209,7 @@ def currentVote():
 
         #Now Actual Get cases
         else:
-            #If vote is active, query votes to see if current_user has voted
+            #CASE 1:If vote is active, query votes to see if current_user has voted
             if latestVote.isActive:
                 # if user vote not found, send to vote page
                 if not Votes.query.filter_by(name=session['name']).first():
@@ -229,12 +218,12 @@ def currentVote():
                                            op3=latestVote.option3,
                                            op4=latestVote.option4,
                                            quest=latestVote.question)
-                #else user voted, send to votechart with all votes data
+                #CASE 2:else user voted, send to votechart with all votes data
                 else:
                     voteData = Votes.query.all()
                     return render_template('voteChart.html', voteData=voteData)
 
-            #If vote is not active, send user to graph page with data
+            #CASE 3:If vote is not active, send user to graph page with data
             else:
                 #will leave this for now as graphing it will require a graphing tool and
                 # sending said graph through template/alternative. Problem for later.
@@ -245,12 +234,13 @@ def currentVote():
         #we should try and move encryption to JS on the clientside so we can just send the vote
         voteVal = request.form['chosenValue']
         print("recieved vote:", voteVal)
-        #debug: check coprime list to see if any values exist. (wtf)
-        #encrypt vote
-        latestVote = CurrentVote.query.order_by(desc(CurrentVote.id)).first()
 
+
+        latestVote = CurrentVote.query.order_by(desc(CurrentVote.id)).first()
         if len(currentCoprimeList) <= 0:
             refreshCoprimeList(latestVote.n, latestVote.p, latestVote.q)
+
+        # encrypt vote
         encVote = encryptVote(random.choice(currentCoprimeList), int(voteVal), latestVote.n)
         print("name:", session['name'])
         print("encrypted vote:", encVote)
@@ -310,6 +300,7 @@ def createVote():
         tempVote.option2Total = 0
         tempVote.option3Total = 0
         tempVote.option4Total = 0
+        tempVote.tally = 0
 
         #commit to db
         db.session.add(tempVote)
@@ -392,23 +383,38 @@ def endVote():
                                      latestVote.mu)
             print("tally:", tallyProduct)
             print("decrypt:", checksum)
-            #save tally to Currentvote, and set to Active = 0. Pivotting away from that stupid, broken
-            #PastVotes table.
+
 
             splInt = str(checksum)
+            splArr = []
+            #HOW DO YOU SPLIT AN INT INTO 8 INTS AND MAKE SUREIT WORKS ;-;;;;
+            #This makes my head hurt
+            #for i in range (0, 8):
+            #    if splInt[i] == '1':
+            #        splArr.append(1)
+            #    else:
+            #        splArr.append(0)
+            #print('splInt:', splInt)
+            #print('splArr:', splArr)
             a = splInt[0:1]
-            b = splInt[2:3]
-            c = splInt[4:5]
-            d = splInt[6:]
+            b = splInt[1:2]
+            c = splInt[2:3]
+            d = splInt[3:4]
             latestVote.option1Total = a
             latestVote.option2Total = b
             latestVote.option3Total = c
             latestVote.option4Total = d
             db.session.commit()
+            #More debugging:
+            print("Option 1:", a)
+            print("Option 2:", b)
+            print("Option 3:", c)
+            print("Option 4:", d)
+
             #return template with data to render
             # currently: send the tally through the template, stacked decrypt val/checksum
             # later    : use acutal data and display visuals instead of just tally
-            return render_template('voteResults.html', tally=checksum)
+            return render_template('voteResults.html', latestVote=latestVote)
 
 
 @app.route('/logout')
