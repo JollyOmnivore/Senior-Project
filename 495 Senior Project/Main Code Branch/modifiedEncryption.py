@@ -29,12 +29,12 @@ def powerMod(A, N, M):
 def decryptTotal(total, lam, n, mu):
     power_mod = powerMod(total, lam, n**2) # total^lam % n^2
     result = (power_mod - 1) // n #prev result - 1 // n
-    result = result * mu % n #prev result * mu % n
+    result = (result * mu) % n #prev result * mu % n
     return result
     
 p = random.choice(primesListBig) # random prime value 1
 q = random.choice(primesListBig) # random prime value 2
-while (p == q) or (p < 1500) or (q < 1500) or (p > 2500) or (q > 2500): # ensures p and q are not the same
+while (p == q) or (p < 6000) or (q < 6000) or (p > 10000) or (q > 10000): # ensures p and q are not the same
     p = random.choice(primesListBig) # random prime value 1
     q = random.choice(primesListBig) # random prime value 2
 n = p * q # get prime product
@@ -65,6 +65,8 @@ while(votConf != "y"): # checks against user input for confirming vote
         voteVal = 1000000
     # r val generated with each time user chooses a vote to ensure their encrypt vote is random
     r = random.choice(rValsList)
+    while(r>=n):
+        r = random.choice(rValsList) # ensures r is a value coprime to n
     print("r val: " + str(r))
     passThrough = 1
     # encrypted vote function called here with encryptedVote
@@ -104,6 +106,7 @@ voterCount += 1 # total voters counted
 print("Voter 1 with vote choice " + str(randVote) + " encrypted vote: " + str(voteArray[1]))
 
 valueTotal2 = voteArray[0] * voteArray[1] # product of encrypted votes stored
+#valueTotal2 = valueTotal2 % (n**2)
 for g in range(2,10):
     randVote = random.choice(validVote)
     if randVote == 'a':
@@ -116,13 +119,19 @@ for g in range(2,10):
         fakeVoteVal = 1000000
     voteArray[g] = encryptVote(random.choice(rValsList), fakeVoteVal, n)
     valueTotal2 *= voteArray[g]
-    valueTotal2 = valueTotal2 % (n**2) # multiplies vote product and mods by 2 for storage of smaller size w/ same result
+    #valueTotal2 = valueTotal2 % (n**2) # multiplies vote product and mods by 2 for storage of smaller size w/ same result
     expectedResult += fakeVoteVal # tallies simulated votes to check against
-    voterCount += 1 # increases voter count w/ total voters
+    voterCount += 1 
     print("Voter " + str(g) + " with vote choice " + str(randVote) + " encrypted vote: " + str(voteArray[int(g)]))
 
 actualResult = 0
 decryptedTempVal = 0
+#print(voteArray)
+'''for i in range(0, voterCount):
+    #print(str(i) + " is current index ========")
+    decryptedTempVal = decryptTotal(voteArray[i])
+    #print("decrypted val: " + str(voteArray[i]) + " to vote: " + str(decryptedTempVal))
+    actualResult = decryptedTempVal + actualResult'''
 
 print("vote total (product): " + str(valueTotal2))
 
@@ -133,6 +142,7 @@ totalVotesA = 0
 totalVotersCounted = 0
 actualResult = decryptTotal(valueTotal2, lam, n, mu) # decrypt of encrypted votes product to generate vote tally
 testProductModN2 = actualResult # stores total into a temp val to not modify one value and modify the other
+
 print("=== expected result === " + str(expectedResult))
 print("actual total: " + str(actualResult))
 # checks for total amount of 'D' vals
