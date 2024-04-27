@@ -7,12 +7,12 @@
 </head>
 <body>
 {% extends "navbar.html" %}
-
 {% block content %}
+
 <!--Display graph of vote results here!--->
 <!--This should be fairly easy to modify in the future, IDK how to graph with js tho--->
 <h1>{{ latestVote.question }}</h1>
-<h1>TALLY:</h1>
+<h3>TALLY: {{ latestVote.tally }}</h3>
 <p>option 1:   {{ latestVote.option1 }}:{{ latestVote.option1Total }}</p>
 <p>option 2:   {{ latestVote.option2 }}:{{ latestVote.option2Total }}</p>
 <p>option 3:   {{ latestVote.option3 }}:{{ latestVote.option3Total }}</p>

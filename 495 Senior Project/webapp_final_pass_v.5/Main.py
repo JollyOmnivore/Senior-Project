@@ -88,7 +88,7 @@ class CurrentVote(db.Model):
     option2Total = db.Column(db.Integer())
     option3Total = db.Column(db.Integer())
     option4Total = db.Column(db.Integer())
-    tally = db.Column(db.Integer())
+    tally = db.Column(db.String(240))
 
 
 def printVote(currentVote, valList):
@@ -176,6 +176,7 @@ def create():
             user.username = username
             user.password = password
             user.name = name
+            user.lastVote = 0
             db.session.add(user)
             print("session add")
             db.session.commit()
@@ -211,6 +212,7 @@ def currentVote():
         #Now Actual Get cases
         else:
             #CASE 1:If vote is active, query votes to see if current_user has voted
+            voteData = Votes.query.all()
             if latestVote.isActive:
                 # if user vote not found, send to vote page
                 if not Votes.query.filter_by(name=session['name']).first():
@@ -221,21 +223,19 @@ def currentVote():
                                            quest=latestVote.question)
                 #CASE 2:else user voted, send to votechart with all votes data
                 else:
-                    voteData = Votes.query.all()
                     return render_template('voteChart.html', voteData=voteData)
 
             #CASE 3:If vote is not active, send user to graph page with data
             else:
                 #will leave this for now as graphing it will require a graphing tool and
                 # sending said graph through template/alternative. Problem for later.
-                return render_template('voteResults.html', latestVote=latestVote)
+                return render_template('voteResults.html', latestVote=latestVote, voteData=voteData)
     #Post request handling
     elif request.method == 'POST':
         #for now we will encrypt the vote here. it's not secure, but for now we just need it to work
         #we should try and move encryption to JS on the clientside so we can just send the vote
         voteVal = request.form['chosenValue']
         print("recieved vote:", voteVal)
-
 
         latestVote = CurrentVote.query.order_by(desc(CurrentVote.id)).first()
         if len(currentCoprimeList) <= 0:
@@ -252,8 +252,8 @@ def currentVote():
         #save to table
         db.session.add(newvote)
         #stress tester
-        for i in range(0, 10):
-            samples = [1, 100, 10000, 1000000]  #10^6 currently breaks the big decrypt.
+        for i in range(0, 100):
+            samples = [1, 100, 10000, 1000000]
             tempyVote = Votes()
             tempyVote.name = str(i) + "Joe"
             tempyVote.vote = encryptVote(random.choice(currentCoprimeList), random.choice(samples), latestVote.n)
@@ -261,6 +261,9 @@ def currentVote():
             print("encrypted vote:", tempyVote.vote)
             db.session.add(tempyVote)
         #end stress tester
+        #Save last vote to user for profile page.
+        currUser = User.query.filter_by(username=current_user.username).first()
+        currUser.lastVote = encVote
         db.session.commit()
         return redirect('/currentVote')
 
@@ -278,14 +281,7 @@ def createVote():
         else:
             return redirect('/')
     elif request.method == 'POST':
-        #add code to delete the last "CurrentVote"
-        #for now we will always wipe the active vote, there will
-        #only be one active vote at a time. for now, It's what we
-        #can do for the meeting tommorow.
-
-        #prepare by initiallizing all vote values
-        #if CurrentVote exsists, clear table and coprime list
-
+        #Clear any values exsistent in coprime list, theyre about to be made irrelevant
         clearCoprimeList()
 
         #create vote and populate values
@@ -324,7 +320,7 @@ def update():
         newpassword = request.form['newpassword']
         user = current_user
         if user.password == password:
-            #user = User.query.filter_by(password=password).all()
+            user = User.query.filter_by(password=password).all()
             user.password = newpassword
             db.session.commit()
             return redirect('/')
@@ -336,12 +332,18 @@ def update():
 @login_required
 def profile():
     if request.method == 'GET':
-        if current_user.username != "Admin" or session['name'] != "Admin":
+        #query for current user to load lastVote
+        currUser = User.query.filter_by(username=current_user.username).first()
+        if current_user.username == "Admin" and session['name'] == "Admin":
+            # query all pastvotes in CurrentVote
             all_votes = CurrentVote.query.all()
+            debug = 0
             for vote in all_votes:
-                print("Question:", vote.question)
-            return render_template('profile.html', votes=all_votes)
-        return render_template('profile.html')
+                print(debug, ":", vote.question)
+                debug += 1
+
+            return render_template('profile.html', lastVote=currUser.lastVote, votes=all_votes)
+        return render_template('profile.html', lastVote=currUser.lastVote)
 
 
 @app.route('/endVote')
@@ -369,13 +371,9 @@ def endVote():
             # delete all votes from table
             allVotes = Votes.query.all()
             for vote in allVotes:
-                print("Tally Prod:", tallyProduct, " * ", vote.vote)
                 tallyProduct = tallyProduct * vote.vote
-                print("New Tally:", tallyProduct)
                 singleDec = decryptTotal(vote.vote, latestVote.lam, latestVote.n, latestVote.mu)
-                #print("checkval:", singleDec)
-                checksum += decryptTotal(vote.vote, latestVote.lam, latestVote.n, latestVote.mu)
-                #print("checksum:", checksum)
+                checksum += singleDec
                 db.session.delete(vote)
             #calc and print tally
             voteTally = decryptTotal(tallyProduct,
@@ -383,7 +381,8 @@ def endVote():
                                      latestVote.n,
                                      latestVote.mu)
             print("tally:", tallyProduct)
-            print("decrypt:", checksum)
+            print("decrypt:", voteTally)
+            print("checkval", checksum)
 
 
 
@@ -396,11 +395,12 @@ def endVote():
             #        splArr.append(0)
             #print('splInt:', splInt)
             #print('splArr:', splArr)
-            a, b, c, d = tallyUp(checksum)
+            a, b, c, d = tallyUp(voteTally)
             latestVote.option1Total = a
             latestVote.option2Total = b
             latestVote.option3Total = c
             latestVote.option4Total = d
+            latestVote.tally = str(tallyProduct % (latestVote.n ** 2))
             db.session.commit()
             #More debugging:
             print("Option 1:", a)
