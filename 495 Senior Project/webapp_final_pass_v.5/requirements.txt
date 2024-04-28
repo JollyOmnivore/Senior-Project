@@ -1,4 +1,4 @@
 Flask==2.2.2
 Flask-SQLAlchemy==3.0.3
 Flask-Login==0.6.2
-gmpy2==2.1.0b5
+gmpy2==2.1.5 #was 0b5
