@@ -79,6 +79,7 @@ class CurrentVote(db.Model):
     option2 = db.Column(db.String(100))
     option3 = db.Column(db.String(100))
     option4 = db.Column(db.String(100))
+    numVoters = db.Column(db.Integer)
     lam = db.Column(db.Integer())
     mu = db.Column(db.Integer())
     n = db.Column(db.Integer())
@@ -90,6 +91,7 @@ class CurrentVote(db.Model):
     option2Total = db.Column(db.Integer())
     option3Total = db.Column(db.Integer())
     option4Total = db.Column(db.Integer())
+    abstainTotal = db.Column(db.Integer())
     tally = db.Column(db.String(240))
 
 
@@ -254,16 +256,16 @@ def currentVote():
         #save to table
         db.session.add(newvote)
         #stress tester
-        '''
-        for i in range(0, 100):
+        #'''
+        for i in range(0, latestVote.numVoters - 1):
             samples = [1, 100, 10000, 1000000]
             tempyVote = Votes()
-            tempyVote.name = str(i) + "Joe"
+            tempyVote.name = str(i + 1) + "Joe"
             tempyVote.vote = encryptVote(random.choice(currentCoprimeList), random.choice(samples), latestVote.n)
             print("name:", tempyVote.name)
             print("encrypted vote:", tempyVote.vote)
             db.session.add(tempyVote)
-            '''
+        #'''
         #end stress tester
         #Save last vote to user for profile page.
         currUser = User.query.filter_by(username=current_user.username).first()
@@ -295,12 +297,14 @@ def createVote():
         tempVote.option2 = request.form['option2']
         tempVote.option3 = request.form['option3']
         tempVote.option4 = request.form['option4']
+        tempVote.numVoters = request.form['num_voters']
         tempVote.n, tempVote.p, tempVote.q, tempVote.lam, tempVote.mu, currentCoprimeList = createVals()
         tempVote.isActive = True
         tempVote.option1Total = 0
         tempVote.option2Total = 0
         tempVote.option3Total = 0
         tempVote.option4Total = 0
+        tempVote.abstainTotal = 0
         tempVote.tally = 0
 
         #commit to db
@@ -356,13 +360,13 @@ def endVote():
     #make sure its "Admin"
     #if not, redir to home
     if current_user.username != "Admin" or session['name'] != "Admin":
-        return redirect('/')
+        return redirect('/currentVote')
     #else check current vote
     else:
         latestVote = CurrentVote.query.order_by(desc(CurrentVote.id)).first()
         #check if already set to False, redir if so
         if not latestVote.isActive:
-            return redirect('/')
+            return redirect('/currentVote')
         #if true, vote MUST BE ACTIVE AND ADMIN USER.
         #ending the vote:
         else:
@@ -389,16 +393,6 @@ def endVote():
             print("checkval", checksum)
 
 
-
-            #HOW DO YOU SPLIT AN INT INTO 8 INTS AND MAKE SUREIT WORKS ;-;;;;
-            #This makes my head hurt
-            #for i in range (0, 8):
-            #    if splInt[i] == '1':
-            #        splArr.append(1)
-            #    else:
-            #        splArr.append(0)
-            #print('splInt:', splInt)
-            #print('splArr:', splArr)
             a, b, c, d = tallyUp(voteTally)
             latestVote.option1Total = a
             latestVote.option2Total = b

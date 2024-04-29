@@ -54,6 +54,7 @@
     <thead>
         <tr>
             <th>Question</th>
+            <th>Total Voters</th>
             <th>Option 1</th>
             <th>Option 2</th>
             <th>Option 3</th>
@@ -62,12 +63,14 @@
             <th>Option 2 Total</th>
             <th>Option 3 Total</th>
             <th>Option 4 Total</th>
+            <th>Abstains</th>
         </tr>
     </thead>
     <tbody>
         {% for vote in votes %}
         <tr>
             <td>{{ vote.question }}</td>
+            <td>{{ vote.numVoters }}</td>
             <td>{{ vote.option1 }}</td>
             <td>{{ vote.option2 }}</td>
             <td>{{ vote.option3 }}</td>
@@ -76,6 +79,8 @@
             <td>{{ vote.option2Total }}</td>
             <td>{{ vote.option3Total }}</td>
             <td>{{ vote.option4Total }}</td>
+            <td>{{ vote.abstainTotal }}</td>
+
         </tr>
         {% endfor %}
     </tbody>
