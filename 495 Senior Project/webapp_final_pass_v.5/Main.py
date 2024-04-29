@@ -41,6 +41,8 @@ import time
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.sqlite'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
 db = SQLAlchemy(app)
 
 currentCoprimeList = []
@@ -252,6 +254,7 @@ def currentVote():
         #save to table
         db.session.add(newvote)
         #stress tester
+        '''
         for i in range(0, 100):
             samples = [1, 100, 10000, 1000000]
             tempyVote = Votes()
@@ -260,6 +263,7 @@ def currentVote():
             print("name:", tempyVote.name)
             print("encrypted vote:", tempyVote.vote)
             db.session.add(tempyVote)
+            '''
         #end stress tester
         #Save last vote to user for profile page.
         currUser = User.query.filter_by(username=current_user.username).first()
@@ -431,3 +435,4 @@ def functionToRun(err):
 if __name__ == '__main__':
     random.seed(time.time_ns())
     app.run()
+

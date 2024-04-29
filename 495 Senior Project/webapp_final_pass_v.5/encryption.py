@@ -13,14 +13,31 @@
 import random
 import json
 import gmpy2
+#print("Current directory:", os.getcwd())
+#print("Files in current directory:", os.listdir('.'))
 
-#prepare json files for arrays
+
+
+
+
+#prepare json files for arrays (PyAnywhere)
+#with open('/home/jMuskat2024/mysite/instance/prime_numbers.json', 'r') as f:
+#    data = json.load(f)
+#primesListBig = data['10kPrimeList']
+#with open('/home/jMuskat2024/mysite/instance/prime_numbers99980001.json', 'r') as k:
+#    data = json.load(k)
+#rValsList = data['1MPrimeList']
+
+#prepare json files for arrays (local build)
 with open('instance/prime_numbers.json', 'r') as f:
     data = json.load(f)
 primesListBig = data['10kPrimeList']
 with open('instance/prime_numbers99980001.json', 'r') as k:
     data = json.load(k)
 rValsList = data['1MPrimeList']
+
+
+
 
 
 # creates a list of random coprimes in the range of 2 through the n value (aka keyVal)
