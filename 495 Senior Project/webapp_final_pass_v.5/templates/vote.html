@@ -22,7 +22,7 @@ body {
   font-family: 'Helvetica Neue', Arial, sans-serif;
 }
 form {
-   display: flex;
+   display: block;
    justify-content: center;
    align-items: center;
    height: 10px;
@@ -33,11 +33,15 @@ form {
 <h1>{{ quest }}</h1>
 
 <h3>Chosen Option: <span id="visibleValue">{{ optionText|default('') }}</span></h3>
-<h3>Use matchstick to test the encryption!</h3>
+<h3>Use matchstick to test the encryption (Or just enter a vote below!)</h3>
 
-<h3 class="encryptValue">Encrypted Vote:<span class="encryptValue">{{ match|default('') }}</span></h3>
-<h3 class="decryptValue">Decrypted Vote:<span class="decryptValue">{{ decryptVal|default('') }}</span></h3>
-
+<form action="/currentVote" method="post" id="form">
+    <input type="number" id="encryptVal" name="encryptVal" value="{{ match|default('') }}">
+    <input type="hidden" id="chosenValue" name="chosenValue" value="{{ chosenValue|default('') }}">
+    <input type="hidden" id="optionText" name="optionText" value="{{ optionText|default('') }}">
+    <input type="hidden" id="decryptVal" name="decryptVal" value="{{ striker|default('') }}">
+</form><br>
+<h3 class="vanishElement">Decrypted Vote:<span class="vanishElement">{{ striker|default('') }}</span></h3>
 
 <div class="btn-group">
   <button class="option-btn" value="{{ op1 }}" id="1">{{ op1 }}</button>
@@ -50,15 +54,11 @@ form {
 <button class="option-btn" value="Abstain" id="0">Abstain</button>
 <h3><!--Your Vote is: 321871423734 --></h3>
 
-<form action="/currentVote" method="post">
-    <input type="hidden" id="chosenValue" name="chosenValue" value="{{ chosenValue|default('') }}">
-    <input type="hidden" id="optionText" name="optionText" value="{{ optionText|default('') }}">
-    <input type="hidden" id="encryptVal" name="encryptVal" value="{{ match|default('') }}">
-    <input type="hidden" id="decryptVal" name="decryptVal" value="{{ decryptVal|default('') }}">
-    <button type="submit">Submit Vote</button>
-    <button type="submit" formaction="/matchstick">TEST:MATCHSTICK</button>
-    <button type="submit" formaction="/decrypt">TEST:DECRYPT</button>
-</form>
+
+<button type="submit" id="submitButton">Submit Vote</button>
+<button type="submit" id="encButton">Encrypt My Vote!</button>
+<button type="submit" formaction="/striker" id="decButton">Decrypt My Vote!</button>
+
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -68,16 +68,31 @@ form {
                 document.getElementById('visibleValue').innerText = this.value; // storing the button id in visible field.
                 document.getElementById('chosenValue').value = this.id; // storing the button value in the hidden field.
                 document.getElementById('optionText').value = this.value; // populate optionText val, replace matchstick
-                document.getElementById('decryptVal').value = ""
-                document.getElementById('encryptVal').value = ""; // populate optionText val, replace matchstick
+                document.getElementById('decryptVal').value = ""; // empty values upon pressing button, dump matchstick vals
+                document.getElementById('encryptVal').value = "";
 
-                encryptStuff = document.getElementsByClassName('encryptValue');
+                encryptStuff = document.getElementsByClassName('vanishElement');
                 for (var i = 0; i < encryptStuff.length; i++) {
                     encryptStuff[i].hidden = true;
                 }
             });
         }
     });
+
+    document.getElementById('submitButton').addEventListener("click", function() {
+        document.getElementById('form').submit();
+    });
+    document.getElementById('encButton').addEventListener("click", function() {
+        form = document.getElementById('form');
+        form.action = "/matchstick";
+        form.submit()
+    });
+    document.getElementById('decButton').addEventListener("click", function() {
+        form = document.getElementById('form');
+        form.action = "/striker";
+        form.submit()
+    });
+
 </script>
 {% endblock %}
 </body>

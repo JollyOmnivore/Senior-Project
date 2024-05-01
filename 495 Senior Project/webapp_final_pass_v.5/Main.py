@@ -243,7 +243,6 @@ def currentVote():
 
         #matchstick:
         # Expected vals:
-        # 'chosenValue'
         # 'encryptVal'
 
 
@@ -285,9 +284,17 @@ def currentVote():
         newvote = Votes()
         newvote.name = session['name']
         encVote = request.form['encryptVal']
-        #if value present, send vote as is with name, else encrypt
-        if encVote:
-            print("Matchstick Submit")
+        decVote = request.form['decryptVal']
+
+        # if value present, decrypt: run striker and decrypt sent vote, returning to the page
+        # steps:
+        # catch values from
+        if decVote:
+            print("Striker Submit (Decryption)")
+
+        elif encVote:
+        # if value present, encrypt: run matchstick and encrypt sent vote, returning to the page
+            print("Matchstick Submit (Encryption)")
             newvote.vote = int(encVote)
         else:
             print("Regular Submit")
@@ -413,6 +420,9 @@ def currentVote():
         db.session.commit()
         return redirect('/currentVote')
 
+#The following functions represent zero-knowledge proof, As wanted by Muskat:
+# Matchstick returns encrypted votes to the vote.html form, giving users the ability to
+#see their encrypted vote, and have the option to submit/decrypt using the form.
 @app.route('/matchstick', methods=['GET', 'POST'])
 @login_required
 def matchstick():
@@ -438,12 +448,9 @@ def matchstick():
     voteVal = request.form['chosenValue']
     optionText = request.form['optionText']
 
-
-
     #if no val present, ie hit matchstick with no val, redirect back to page
     if voteVal == '':
         return redirect("/currentVote")
-
 
     print("!MATCHSTICK!")
     print("###DEBUG###")
@@ -466,13 +473,70 @@ def matchstick():
                            optionText=optionText,
                            chosenValue=voteVal)
 
-@app.route('/decrypt', methods=['GET', 'POST'])
+
+#This is the other half, hence matchstick->striker. This takes the encrypted matchstick
+# votes and decrypts them, sending itself and all the data back to the form.
+@app.route('/striker', methods=['GET', 'POST'])
 @login_required
-def decryptor():
+def striker():
+    #Input: Post req from form, also not a submit
+    #output: send back to form with prepoped values
+    # I'm going to try and adapt this from matchstick.
+
     # If GET (IDK how but just in case)
     if request.method == 'GET':
         # send back to currentVote (if this ever activates someone is being a goblin)
         return redirect("/currentVote")
+
+    latestVote = CurrentVote.query.order_by(desc(CurrentVote.id)).first()
+
+    if len(currentCoprimeList) <= 0:
+        refreshCoprimeList(latestVote.n, latestVote.p, latestVote.q)
+
+    #grab form values.
+    # populating matchstick AND Dec, which will need:
+    # + opt1-4          latestVote
+    # + quest           latestVote
+    # + match           form
+    # + optionText      form
+    # + chosenValue     form
+    # + striker         new val
+
+    print("!STRIKER!")
+    print("###DEBUG###")
+    print("Len coprime list:", len(currentCoprimeList))
+
+    voteVal = request.form['chosenValue']
+    print("recieved vote:", voteVal)
+    optionText = request.form['optionText']
+    print("optionText:", optionText)
+    #ERR HERE. WHY?
+    matchVote = request.form['encryptVal']
+    print("matchVote:", matchVote)
+
+    if matchVote == '':
+        return redirect("/currentVote")
+
+    strikerVote = decryptTotal(int(matchVote), latestVote.lam, latestVote.n, latestVote.mu)
+    print("strikerVote:", strikerVote)
+
+    return render_template('vote.html', op1=latestVote.option1,
+                           op2=latestVote.option2,
+                           op3=latestVote.option3,
+                           op4=latestVote.option4,
+                           quest=latestVote.question,
+                           match=matchVote,
+                           optionText=optionText,
+                           chosenValue=voteVal,
+                           striker=strikerVote)
+
+
+
+
+
+
+
+
 
 
 
