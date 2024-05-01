@@ -50,7 +50,7 @@ form {
 <h3><!--Your Vote is: 321871423734 --></h3>
 
 <form action="/currentVote" method="post">
-    <input type="hidden" id="chosenValue" name="chosenValue" value="">
+    <input type="hidden" id="chosenValue" name="chosenValue" value="{{ chosenValue|default('') }}">
     <input type="hidden" id="optionText" name="optionText" value="{{ optionText|default('') }}">
     <input type="hidden" id="encryptVal" name="encryptVal" value="{{ match|default('') }}">
     <button type="submit">Submit Vote</button>

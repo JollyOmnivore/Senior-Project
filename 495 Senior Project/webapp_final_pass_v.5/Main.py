@@ -244,7 +244,7 @@ def currentVote():
         #matchstick:
         # Expected vals:
         # 'chosenValue'
-        #
+        # 'encryptVal'
 
 
         #for now we will encrypt the vote here. it's not secure, but for now we just need it to work
@@ -280,15 +280,24 @@ def currentVote():
         # do every time. This is the case for both local and hosted. Please for the love of god,
         # if you wish to venture into this cave, COME PREPARED. This is a dark road to walk down.
 
-        #Encrypt vote
-        encVote = encryptVote(random.choice(currentCoprimeList), int(voteVal), latestVote.n)
+        #if this a matchstick, its already encrypted and ready, it just needs to be submitted
+        #retrieve matchstick value 'encryptVal'
+        newvote = Votes()
+        newvote.name = session['name']
+        encVote = request.form['encryptVal']
+        #if value present, send vote as is with name, else encrypt
+        if encVote:
+            print("Matchstick Submit")
+            newvote.vote = int(encVote)
+        else:
+            print("Regular Submit")
+            encVote = encryptVote(random.choice(currentCoprimeList), int(voteVal), latestVote.n)
 
         print("name:", session['name'])
         print("vote:", voteVal)
         print("encrypted vote:", encVote)
         #create and populate vote object
-        newvote = Votes()
-        newvote.name = session['name']
+
         newvote.vote = encVote
 
         #VOTE CHECKS!
@@ -452,7 +461,8 @@ def matchstick():
                            op4=latestVote.option4,
                            quest=latestVote.question,
                            match=matchVote,
-                           optionText=optionText)
+                           optionText=optionText,
+                           chosenValue=voteVal)
 
 
 @app.route('/createVote', methods=['GET', 'POST'])
