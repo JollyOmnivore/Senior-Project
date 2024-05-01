@@ -262,8 +262,15 @@ def currentVote():
         # and requires the above if statement to refill the current coprime list, which we must
         # do every time. This is the case for both local and hosted. Please for the love of god,
         # if you wish to venture into this cave, COME PREPARED. This is a dark road to walk down.
-        encVote = encryptVote(random.choice(currentCoprimeList), int(voteVal), latestVote.n)
+
+        #ABSTAIN CASE GOES HERE!!!! THIS NEEDS JOE HELP!
+        if (voteVal == ''):
+            encVote = encryptVote(random.choice(currentCoprimeList), random.choice(currentCoprimeList), latestVote.n)
+        else :
+            encVote = encryptVote(random.choice(currentCoprimeList), int(voteVal), latestVote.n)
+
         print("name:", session['name'])
+        print("vote:", voteVal)
         print("encrypted vote:", encVote)
         #create and populate vote object
         newvote = Votes()
@@ -366,9 +373,10 @@ def currentVote():
         # This will create a handful of votes based on the static number of voters
         # and is untested with the live web version in python anywhere. Either adapt
         # to work on webserver or just use locally.
+        #note: currentCoprimeList will be populated here if needed
         '''
         for i in range(0, latestVote.numVoters - 1):
-            samples = [1, 100, 10000, 1000000]
+            samples = [1, 100, 10000, 1000000] # add 0 to options to sim abstain
             tempyVote = Votes()
             tempyVote.name = str(i + 1) + "Joe"
             tempyVote.vote = encryptVote(random.choice(currentCoprimeList), random.choice(samples), latestVote.n)
