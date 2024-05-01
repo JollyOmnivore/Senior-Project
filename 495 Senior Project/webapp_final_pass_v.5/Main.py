@@ -235,9 +235,26 @@ def currentVote():
                 return render_template('voteResults.html', latestVote=latestVote, voteData=voteData)
     #Post request handling
     elif request.method == 'POST':
+        #Two cases:
+
+        #regular:
+        # Expected vals:
+        # 'chosenValue'
+
+        #matchstick:
+        # Expected vals:
+        # 'chosenValue'
+        #
+
+
         #for now we will encrypt the vote here. it's not secure, but for now we just need it to work
         #we should try and move encryption to JS on the clientside so we can just send the vote
         voteVal = request.form['chosenValue']
+
+        #check to make sure val picked, if not return
+        if voteVal == '':
+            return redirect("/currentVote")
+
         print("recieved vote:", voteVal)
 
         #query table for latest vote
@@ -263,11 +280,8 @@ def currentVote():
         # do every time. This is the case for both local and hosted. Please for the love of god,
         # if you wish to venture into this cave, COME PREPARED. This is a dark road to walk down.
 
-        #ABSTAIN CASE GOES HERE!!!! THIS NEEDS JOE HELP!
-        if (voteVal == ''):
-            encVote = encryptVote(random.choice(currentCoprimeList), random.choice(currentCoprimeList), latestVote.n)
-        else :
-            encVote = encryptVote(random.choice(currentCoprimeList), int(voteVal), latestVote.n)
+        #Encrypt vote
+        encVote = encryptVote(random.choice(currentCoprimeList), int(voteVal), latestVote.n)
 
         print("name:", session['name'])
         print("vote:", voteVal)
@@ -334,7 +348,6 @@ def currentVote():
             #stolen from endVote, with adjustments made.
             checksum = 0
             tallyProduct = 1
-            voteCount = len(allVotes)
             for vote in allVotes:
                 tallyProduct = tallyProduct * vote.vote
                 singleDec = decryptTotal(vote.vote, latestVote.lam, latestVote.n, latestVote.mu)
@@ -350,13 +363,13 @@ def currentVote():
             print("checkval", checksum)
 
             #populate values in latestVote
-            a, b, c, d = tallyUp(voteTally)
+            a, b, c, d, abstains = tallyUp(voteTally, latestVote.numVoters)
             latestVote.option1Total = a
             latestVote.option2Total = b
             latestVote.option3Total = c
             latestVote.option4Total = d
             latestVote.tally = str(tallyProduct % (latestVote.n ** 2))
-            latestVote.abstainTotal = latestVote.numVoters - voteCount
+            latestVote.abstainTotal = abstains
             db.session.commit()
             # More debugging:
             print("Option 1:", latestVote.option1Total)
@@ -374,16 +387,16 @@ def currentVote():
         # and is untested with the live web version in python anywhere. Either adapt
         # to work on webserver or just use locally.
         #note: currentCoprimeList will be populated here if needed
-        '''
+        #'''
         for i in range(0, latestVote.numVoters - 1):
-            samples = [1, 100, 10000, 1000000] # add 0 to options to sim abstain
+            samples = [0, 1, 100, 10000, 1000000] # add 0 to options to sim abstain
             tempyVote = Votes()
             tempyVote.name = str(i + 1) + "Joe"
             tempyVote.vote = encryptVote(random.choice(currentCoprimeList), random.choice(samples), latestVote.n)
             print("name:", tempyVote.name)
             print("encrypted vote:", tempyVote.vote)
             db.session.add(tempyVote)
-        '''
+        #'''
         #end stress tester
         #Save last vote to user for profile page.
         currUser = User.query.filter_by(username=current_user.username).first()
@@ -391,12 +404,59 @@ def currentVote():
         db.session.commit()
         return redirect('/currentVote')
 
+@app.route('/matchstick', methods=['GET', 'POST'])
+@login_required
+def matchstick():
+    #Input: Post req from form, not a submit tho!
+    #output: send back to form with prepopulated values
+    # hopefully, the hardest part should be getting the form to cooperate here.
+
+    #If GET (IDK how but just in case)
+    if request.method == 'GET':
+        #send back to currentVote (if this ever activates someone is being a goblin)
+        return redirect("/currentVote")
+
+    #else run the encryption math.
+    #prep encrypt vars
+
+    #query table for latest vote
+    latestVote = CurrentVote.query.order_by(desc(CurrentVote.id)).first()
+
+    if len(currentCoprimeList) <= 0:
+        refreshCoprimeList(latestVote.n, latestVote.p, latestVote.q)
+
+    #grab form value like normal.
+    voteVal = request.form['chosenValue']
+    optionText = request.form['optionText']
+
+    #if no val present, ie hit matchstick with no val, redirect back to page
+    if voteVal == '':
+        return redirect("/currentVote")
+
+
+    print("!MATCHSTICK!")
+    print("###DEBUG###")
+    print("Len coprime list:", len(currentCoprimeList))
+    print("recieved vote:", voteVal)
+    print("optionText:", optionText)
+
+    #no need for a new vote object since were just responding with a return to the
+    #page with an int instead of a whole vote
+    matchVote = encryptVote(random.choice(currentCoprimeList), int(voteVal), latestVote.n)
+
+    #return to vote page with match vote.
+    return render_template('vote.html', op1=latestVote.option1,
+                           op2=latestVote.option2,
+                           op3=latestVote.option3,
+                           op4=latestVote.option4,
+                           quest=latestVote.question,
+                           match=matchVote,
+                           optionText=optionText)
+
 
 @app.route('/createVote', methods=['GET', 'POST'])
 @login_required
 def createVote():
-    global currentCoprimeList
-    print("coprime list len:", len(currentCoprimeList))
     if request.method == 'GET':
         if current_user.username == "Admin":
             # note to self: add a thing here to warn that creating a vote
@@ -499,13 +559,12 @@ def endVote():
             # itterate through and actually calculate tally, then store in val
             # delete all votes from table
             allVotes = Votes.query.all()
-            voteCount = len(allVotes)
             for vote in allVotes:
                 tallyProduct = tallyProduct * vote.vote
                 singleDec = decryptTotal(vote.vote, latestVote.lam, latestVote.n, latestVote.mu)
                 checksum += singleDec
                 db.session.delete(vote)
-            #calc and print tally
+            # calc and print tally
             voteTally = decryptTotal(tallyProduct,
                                      latestVote.lam,
                                      latestVote.n,
@@ -514,13 +573,14 @@ def endVote():
             print("decrypt:", voteTally)
             print("checkval", checksum)
 
-            a, b, c, d = tallyUp(voteTally)
+            # populate values in latestVote
+            a, b, c, d, abstains = tallyUp(voteTally, latestVote.numVoters)
             latestVote.option1Total = a
             latestVote.option2Total = b
             latestVote.option3Total = c
             latestVote.option4Total = d
             latestVote.tally = str(tallyProduct % (latestVote.n ** 2))
-            latestVote.abstainTotal = latestVote.numVoters - voteCount
+            latestVote.abstainTotal = abstains
             db.session.commit()
             #More debugging:
             print("Option 1:", latestVote.option1Total)

@@ -36,10 +36,6 @@ with open('instance/prime_numbers99980001.json', 'r') as k:
     data = json.load(k)
 rValsList = data['1MPrimeList']
 
-
-
-
-
 # creates a list of random coprimes in the range of 2 through the n value (aka keyVal)
 def randNumList(keyVal, p, q):
     newList = []
@@ -59,8 +55,8 @@ def egcd(a, b):
 
 # working version of modular inverse with exceptions thrown when no modular inverse exists
 def encryptVote(randInt, voteVal, n):
-    if voteVal == 0:
-        return 0
+    #if voteVal == 0:
+    #    return 0
     equationPartOne = gmpy2.powmod(n+1, voteVal, n**2)
     randomToProduct = gmpy2.powmod(randInt, n, n**2)
     fullEquation = gmpy2.mul(equationPartOne, randomToProduct) % (n**2)
@@ -108,13 +104,12 @@ def createVals():
   return n, p, q, lam, mu, rValsList
 
 
-def tallyUp(actualResult):
+def tallyUp(actualResult, expectedVotes):
     #init all votes as zeros, just to be sure.
     totalVotesA\
         =totalVotesB\
         =totalVotesC\
         =totalVotesD\
-        =totalNoVotes\
         =totalVotersCounted = 0
 
     while (actualResult - 1000000) >= 0:
@@ -145,5 +140,5 @@ def tallyUp(actualResult):
         totalVotersCounted += 1
 
     #Replace with abstain code when ready.
-    #totalNoVotes = 10 - totalVotersCounted
-    return totalVotesA, totalVotesB, totalVotesC, totalVotesD#, totalNoVotes
+    totalNoVotes = expectedVotes - totalVotersCounted
+    return totalVotesA, totalVotesB, totalVotesC, totalVotesD, totalNoVotes
