@@ -590,7 +590,7 @@ def endVote():
                 tallyProduct = tallyProduct * vote.vote
                 singleDec = decryptTotal(vote.vote, latestVote.lam, latestVote.n, latestVote.mu)
                 checksum += singleDec
-                #db.session.delete(vote)
+                #db.session.delete(vote) #delete vote loop moved to create vote
             # calc and print tally
             voteTally = decryptTotal(tallyProduct,
                                      latestVote.lam,
