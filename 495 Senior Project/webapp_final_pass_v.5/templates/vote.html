@@ -32,11 +32,11 @@ form {
 
 <h1>{{ quest }}</h1>
 
-<h3>Chosen Option: <span id="visibleValue"></span></h3>
+<h3>Chosen Option: <span id="visibleValue">{{ optionText|default('') }}</span></h3>
 <h3>Use matchstick to test the encryption!</h3>
-{% if match %}
-<h3 class="encryptValue">Encrypted Vote:<span class="encryptValue">{{ match }}</span></h3>
-{% endif %}
+
+<h3 class="encryptValue">Encrypted Vote:<span class="encryptValue">{{ match|default('') }}</span></h3>
+
 
 <div class="btn-group">
   <button class="option-btn" value="{{ op1 }}" id="1">{{ op1 }}</button>
@@ -51,7 +51,7 @@ form {
 
 <form action="/currentVote" method="post">
     <input type="hidden" id="chosenValue" name="chosenValue" value="">
-    <input type="hidden" id="optionText" name="optionText" value="">
+    <input type="hidden" id="optionText" name="optionText" value="{{ optionText|default('') }}">
     <button type="submit">Submit Vote</button>
     <button type="submit" formaction="/matchstick">TEST:MATCHSTICK</button>
 </form>
@@ -63,6 +63,7 @@ form {
             btns[i].addEventListener('click', function() {
                 document.getElementById('visibleValue').innerText = this.value; // storing the button id in visible field.
                 document.getElementById('chosenValue').value = this.id; // storing the button value in the hidden field.
+                document.getElementById('optionText').value = this.value; // populate optionText
                 encryptStuff = document.getElementsByClassName('encryptValue');
                 for (var i = 0; i < encryptStuff.length; i++) {
                     encryptStuff[i].hidden = true;

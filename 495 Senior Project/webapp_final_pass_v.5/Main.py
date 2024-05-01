@@ -443,6 +443,7 @@ def matchstick():
     #no need for a new vote object since were just responding with a return to the
     #page with an int instead of a whole vote
     matchVote = encryptVote(random.choice(currentCoprimeList), int(voteVal), latestVote.n)
+    print("match vote:", matchVote)
 
     #return to vote page with match vote.
     return render_template('vote.html', op1=latestVote.option1,
