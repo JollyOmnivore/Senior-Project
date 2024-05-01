@@ -52,6 +52,7 @@ form {
 <form action="/currentVote" method="post">
     <input type="hidden" id="chosenValue" name="chosenValue" value="">
     <input type="hidden" id="optionText" name="optionText" value="{{ optionText|default('') }}">
+    <input type="hidden" id="encryptVal" name="encryptVal" value="{{ match|default('') }}">
     <button type="submit">Submit Vote</button>
     <button type="submit" formaction="/matchstick">TEST:MATCHSTICK</button>
 </form>
@@ -63,7 +64,9 @@ form {
             btns[i].addEventListener('click', function() {
                 document.getElementById('visibleValue').innerText = this.value; // storing the button id in visible field.
                 document.getElementById('chosenValue').value = this.id; // storing the button value in the hidden field.
-                document.getElementById('optionText').value = this.value; // populate optionText
+                document.getElementById('optionText').value = this.value; // populate optionText val, replace matchstick
+                document.getElementById('encryptVal').value = ""; // populate optionText val, replace matchstick
+
                 encryptStuff = document.getElementsByClassName('encryptValue');
                 for (var i = 0; i < encryptStuff.length; i++) {
                     encryptStuff[i].hidden = true;
