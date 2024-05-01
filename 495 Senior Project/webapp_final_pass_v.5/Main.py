@@ -438,6 +438,8 @@ def matchstick():
     voteVal = request.form['chosenValue']
     optionText = request.form['optionText']
 
+
+
     #if no val present, ie hit matchstick with no val, redirect back to page
     if voteVal == '':
         return redirect("/currentVote")
@@ -463,6 +465,17 @@ def matchstick():
                            match=matchVote,
                            optionText=optionText,
                            chosenValue=voteVal)
+
+@app.route('/decrypt', methods=['GET', 'POST'])
+@login_required
+def decryptor():
+    # If GET (IDK how but just in case)
+    if request.method == 'GET':
+        # send back to currentVote (if this ever activates someone is being a goblin)
+        return redirect("/currentVote")
+
+
+
 
 
 @app.route('/createVote', methods=['GET', 'POST'])

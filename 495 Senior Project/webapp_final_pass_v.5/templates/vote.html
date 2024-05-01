@@ -36,6 +36,7 @@ form {
 <h3>Use matchstick to test the encryption!</h3>
 
 <h3 class="encryptValue">Encrypted Vote:<span class="encryptValue">{{ match|default('') }}</span></h3>
+<h3 class="decryptValue">Decrypted Vote:<span class="decryptValue">{{ decryptVal|default('') }}</span></h3>
 
 
 <div class="btn-group">
@@ -53,8 +54,10 @@ form {
     <input type="hidden" id="chosenValue" name="chosenValue" value="{{ chosenValue|default('') }}">
     <input type="hidden" id="optionText" name="optionText" value="{{ optionText|default('') }}">
     <input type="hidden" id="encryptVal" name="encryptVal" value="{{ match|default('') }}">
+    <input type="hidden" id="decryptVal" name="decryptVal" value="{{ decryptVal|default('') }}">
     <button type="submit">Submit Vote</button>
     <button type="submit" formaction="/matchstick">TEST:MATCHSTICK</button>
+    <button type="submit" formaction="/decrypt">TEST:DECRYPT</button>
 </form>
 
 <script>
@@ -65,6 +68,7 @@ form {
                 document.getElementById('visibleValue').innerText = this.value; // storing the button id in visible field.
                 document.getElementById('chosenValue').value = this.id; // storing the button value in the hidden field.
                 document.getElementById('optionText').value = this.value; // populate optionText val, replace matchstick
+                document.getElementById('decryptVal').value = ""
                 document.getElementById('encryptVal').value = ""; // populate optionText val, replace matchstick
 
                 encryptStuff = document.getElementsByClassName('encryptValue');
