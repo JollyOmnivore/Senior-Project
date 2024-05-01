@@ -166,7 +166,6 @@ def login():
             return redirect('/login')
 
 
-#ported over by carter, needs to be made compadible (maybe?)
 @app.route('/create', methods=['GET', 'POST'])
 def create():
     if request.method == 'GET':
@@ -241,11 +240,28 @@ def currentVote():
         voteVal = request.form['chosenValue']
         print("recieved vote:", voteVal)
 
+        #query table for latest vote
         latestVote = CurrentVote.query.order_by(desc(CurrentVote.id)).first()
+
+        #repopulate values using coprime list calculation.
+        # note: This could be optimized by using the (mentioned below) system of threads or some
+        # kind of beautiful server global var. Flask is a gift and a curse.
         if len(currentCoprimeList) <= 0:
             refreshCoprimeList(latestVote.n, latestVote.p, latestVote.q)
 
         # encrypt vote
+        #note: This is where the fabled R check would happen if it were possible.
+        # Implementation of this would require either A) some clever flask thread/worker
+        # handling, B) creation of new sql tables on the fly (illegal, class 2 felony)/storage
+        # of lists in an array IN sql (varsize limit overflow errors),
+        # or C) a system of sockets and broadcasting using JS. This is what killed
+        # my CS412 Blackjack project. Threads are a nightmare and the only other feasible way
+        # to do this would be to seed all possible R choices before the vote using a static val,
+        # which would once again fall to either a global dynamic server variable (that like
+        # currentCoprimeList, would be lost upon thread crash/reset, which happens inevitably
+        # and requires the above if statement to refill the current coprime list, which we must
+        # do every time. This is the case for both local and hosted. Please for the love of god,
+        # if you wish to venture into this cave, COME PREPARED. This is a dark road to walk down.
         encVote = encryptVote(random.choice(currentCoprimeList), int(voteVal), latestVote.n)
         print("name:", session['name'])
         print("encrypted vote:", encVote)
@@ -253,10 +269,104 @@ def currentVote():
         newvote = Votes()
         newvote.name = session['name']
         newvote.vote = encVote
-        #save to table
+
+        #VOTE CHECKS!
+
+        #Collision Check
+        # query active votes table for all
+        allVotes = Votes.query.all()
+
+        # Itterate by vote, check to make sure vote val doesnt match.
+        #note: see note above as to why the R version doesn't exsist.
+        for vote in allVotes:
+            # if vote present, send back to the vote page
+            if vote.vote == newvote.vote:
+                # itterates through and checks, sending user back to page if fail
+                # redir back to page should send user to vote.html based on lack of vote.
+                # add error message at later time
+                return redirect('/currentVote')
+        # Else, vote valid
+
+        # Pass Check: save vote to table
+        #note: Yeah, I'm doing this before I check max voters. Yeah, im a bad influence >:)
+        # Because im doing this, im also incrementing voteInc AFTER I add, for sake of o^3
+        # This could be done better by appending the vote into allVotes directly, and the
+        # closest thing I've found in terms of help is a stack overflow from 7 years ago
+        # with exactly 0 replies. This is gross but THE way to do it. Love that :)
         db.session.add(newvote)
-        #stress tester
-        #'''
+        db.session.commit()
+
+        #refresh allVotes to include new vote before (possibly) running endvote
+        allVotes = Votes.query.all()
+
+        #Max Votes Check
+
+        #if the set number of voters = counted voters, safely end vote
+        # + set vote active to 0
+        # + calculate vote tally
+        # + populate values in latestVote
+        # + print debug for votes
+        # + return template 'voteResults' with latestVote
+        #note: This can and SHOULD be done more safely when live updating is added. This
+        # will probably require sockets and some handling on the html side as well.
+
+        # vote vals at time of run
+        # numVoters/lam/mu/n/p/q = static val (set at create)
+        # isActive = 1
+        # opt1-4 = 0
+        # tally = 0
+
+        #active query vars
+        # latestVote = most recent vote, always active here
+        # allVotes = all active votes (name, vote)
+        if latestVote.numVoters == len(allVotes):
+            # set active vote 0
+            latestVote.isActive = 0
+
+            # calculate vote tally
+            #stolen from endVote, with adjustments made.
+            checksum = 0
+            tallyProduct = 1
+            voteCount = len(allVotes)
+            for vote in allVotes:
+                tallyProduct = tallyProduct * vote.vote
+                singleDec = decryptTotal(vote.vote, latestVote.lam, latestVote.n, latestVote.mu)
+                checksum += singleDec
+                db.session.delete(vote)
+            #calc and print tally
+            voteTally = decryptTotal(tallyProduct,
+                                     latestVote.lam,
+                                     latestVote.n,
+                                     latestVote.mu)
+            print("tally:", tallyProduct)
+            print("decrypt:", voteTally)
+            print("checkval", checksum)
+
+            #populate values in latestVote
+            a, b, c, d = tallyUp(voteTally)
+            latestVote.option1Total = a
+            latestVote.option2Total = b
+            latestVote.option3Total = c
+            latestVote.option4Total = d
+            latestVote.tally = str(tallyProduct % (latestVote.n ** 2))
+            latestVote.abstainTotal = latestVote.numVoters - voteCount
+            db.session.commit()
+            # More debugging:
+            print("Option 1:", latestVote.option1Total)
+            print("Option 2:", latestVote.option2Total)
+            print("Option 3:", latestVote.option3Total)
+            print("Option 4:", latestVote.option4Total)
+            print("Abstains:", latestVote.abstainTotal)
+
+            #return render template with voteResults with data, exiting function.
+            # following this,
+            return render_template('voteResults.html', latestVote=latestVote)
+
+        #Stress Tester
+        # This will create a handful of votes based on the static number of voters
+        # and is untested with the live web version in python anywhere. Either adapt
+        # to work on webserver or just use locally.
+        '''
         for i in range(0, latestVote.numVoters - 1):
             samples = [1, 100, 10000, 1000000]
             tempyVote = Votes()
@@ -265,7 +375,7 @@ def currentVote():
             print("name:", tempyVote.name)
             print("encrypted vote:", tempyVote.vote)
             db.session.add(tempyVote)
-        #'''
+        '''
         #end stress tester
         #Save last vote to user for profile page.
         currUser = User.query.filter_by(username=current_user.username).first()
@@ -305,6 +415,7 @@ def createVote():
         tempVote.option3Total = 0
         tempVote.option4Total = 0
         tempVote.abstainTotal = 0
+        tempVote.voteInc = 0
         tempVote.tally = 0
 
         #commit to db
@@ -372,12 +483,15 @@ def endVote():
         else:
             # set CurrentVote.isActive = False
             latestVote.isActive = False
+            # this val is probably unneccesary, could
+            # just init latestVote.tally = 1 in create maybe?
             tallyProduct = 1
             checksum = 0
             # calculate the tally
             # itterate through and actually calculate tally, then store in val
             # delete all votes from table
             allVotes = Votes.query.all()
+            voteCount = len(allVotes)
             for vote in allVotes:
                 tallyProduct = tallyProduct * vote.vote
                 singleDec = decryptTotal(vote.vote, latestVote.lam, latestVote.n, latestVote.mu)
@@ -392,19 +506,20 @@ def endVote():
             print("decrypt:", voteTally)
             print("checkval", checksum)
 
-
             a, b, c, d = tallyUp(voteTally)
             latestVote.option1Total = a
             latestVote.option2Total = b
             latestVote.option3Total = c
             latestVote.option4Total = d
             latestVote.tally = str(tallyProduct % (latestVote.n ** 2))
+            latestVote.abstainTotal = latestVote.numVoters - voteCount
             db.session.commit()
             #More debugging:
-            print("Option 1:", a)
-            print("Option 2:", b)
-            print("Option 3:", c)
-            print("Option 4:", d)
+            print("Option 1:", latestVote.option1Total)
+            print("Option 2:", latestVote.option2Total)
+            print("Option 3:", latestVote.option3Total)
+            print("Option 4:", latestVote.option4Total)
+            print("Abstains:", latestVote.abstainTotal)
 
             #return template with data to render
             # currently: send the tally through the template, stacked decrypt val/checksum
